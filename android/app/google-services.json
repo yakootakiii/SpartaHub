@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "502842650102",
+    "project_id": "spartahub-ecb86",
+    "storage_bucket": "spartahub-ecb86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502842650102:android:61389a7c1a7007683aebd7",
+        "android_client_info": {
+          "package_name": "com.example.claudeaigenerated_spartahub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJGp6QsLxQCfaJK7PJFSENPnZWhZ-xW_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

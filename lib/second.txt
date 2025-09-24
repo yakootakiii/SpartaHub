@@ -1,0 +1,2736 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+
+void main() {
+  runApp(SpartaHubApp());
+}
+
+class SpartaHubApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SpartaHub',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: 'SF Pro Display',
+        scaffoldBackgroundColor: Colors.grey[50],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+          centerTitle: true,
+        ),
+      ),
+      home: OnboardingScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+// Onboarding Screen
+class OnboardingScreen extends StatefulWidget {
+  @override
+  _OnboardingScreenState createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  PageController _pageController = PageController();
+  int _currentIndex = 0;
+
+  final List<OnboardingData> _onboardingData = [
+    OnboardingData(
+      title: "Fast Hyperlocal Delivery",
+      description:
+          "Get your meals, groceries, and essentials delivered quickly within BSU campus and nearby areas.",
+      icon: Icons.flash_on,
+    ),
+    OnboardingData(
+      title: "Support Your Community",
+      description:
+          "Connect with local vendors and help fellow students with our 'Buy a Meal' feature.",
+      icon: Icons.favorite,
+    ),
+    OnboardingData(
+      title: "Flexible & Affordable",
+      description:
+          "Order now or schedule ahead with student-friendly prices and multiple payment options.",
+      icon: Icons.schedule,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              flex: 3,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                itemCount: _onboardingData.length,
+                itemBuilder: (context, index) {
+                  return OnboardingPage(data: _onboardingData[index]);
+                },
+              ),
+            ),
+            // Page Indicator
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _onboardingData.length,
+                (index) => Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentIndex == index ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentIndex == index
+                        ? Colors.blue
+                        : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 40),
+            // Action Buttons
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AuthenticationScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => MainScreen()),
+                      );
+                    },
+                    child: Text(
+                      'Skip for now',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class OnboardingData {
+  final String title;
+  final String description;
+  final IconData icon;
+
+  OnboardingData({
+    required this.title,
+    required this.description,
+    required this.icon,
+  });
+}
+
+class OnboardingPage extends StatelessWidget {
+  final OnboardingData data;
+
+  OnboardingPage({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(60),
+            ),
+            child: Icon(data.icon, size: 60, color: Colors.blue),
+          ),
+          SizedBox(height: 40),
+          Text(
+            data.title,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
+          Text(
+            data.description,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Authentication Screen
+class AuthenticationScreen extends StatefulWidget {
+  @override
+  _AuthenticationScreenState createState() => _AuthenticationScreenState();
+}
+
+class _AuthenticationScreenState extends State<AuthenticationScreen> {
+  bool _isLogin = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20),
+              Text(
+                _isLogin ? 'Welcome Back' : 'Create Account',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                _isLogin
+                    ? 'Sign in to continue to SpartaHub'
+                    : 'Join the SpartaHub community',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 40),
+
+              // Form Fields
+              if (!_isLogin) ...[
+                _buildTextField('Full Name', Icons.person_outline),
+                SizedBox(height: 16),
+              ],
+              _buildTextField('Email', Icons.email_outlined),
+              SizedBox(height: 16),
+              _buildTextField('Password', Icons.lock_outline, isPassword: true),
+
+              if (!_isLogin) ...[
+                SizedBox(height: 16),
+                _buildTextField(
+                  'Confirm Password',
+                  Icons.lock_outline,
+                  isPassword: true,
+                ),
+              ],
+
+              if (_isLogin) ...[
+                SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: Text('Forgot Password?'),
+                  ),
+                ),
+              ],
+
+              SizedBox(height: 32),
+
+              // Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    _isLogin ? 'Sign In' : 'Create Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 24),
+
+              // Toggle between login and register
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _isLogin
+                        ? "Don't have an account? "
+                        : "Already have an account? ",
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isLogin = !_isLogin;
+                      });
+                    },
+                    child: Text(
+                      _isLogin ? 'Sign Up' : 'Sign In',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+        ),
+        SizedBox(height: 8),
+        TextField(
+          obscureText: isPassword,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: Colors.grey[400]),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.blue),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Main Screen with Bottom Navigation
+class MainScreen extends StatefulWidget {
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = [
+    HomeScreen(),
+    SearchScreen(),
+    CartScreen(),
+    NotificationsScreen(),
+    ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey[500],
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search_outlined),
+            activeIcon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            activeIcon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            activeIcon: Icon(Icons.notifications),
+            label: 'Activity',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Home Screen
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Good Morning!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          'What would you like today?',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.location_on_outlined,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Special Feature Banner
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange, Colors.deepOrange],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Buy a Meal for Someone',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Help fellow students in need',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.favorite, color: Colors.white, size: 32),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 24),
+
+              // Categories
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Categories',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(height: 16),
+              Container(
+                height: 120,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildCategoryCard('Meals', Icons.restaurant, Colors.red),
+                    _buildCategoryCard(
+                      'Groceries',
+                      Icons.shopping_basket,
+                      Colors.green,
+                    ),
+                    _buildCategoryCard(
+                      'School Supplies',
+                      Icons.school,
+                      Colors.blue,
+                    ),
+                    _buildCategoryCard(
+                      'Essentials',
+                      Icons.local_convenience_store,
+                      Colors.purple,
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 24),
+
+              // Quick Actions
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickAction(
+                        'Order Now',
+                        Icons.flash_on,
+                        Colors.blue,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickAction(
+                        'Advance Order',
+                        Icons.schedule,
+                        Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 24),
+
+              // Popular Items
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Text(
+                      'Popular Near You',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    TextButton(onPressed: () {}, child: Text('See All')),
+                  ],
+                ),
+              ),
+              Container(
+                height: 200,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildFoodCard(
+                      'Chicken Adobo',
+                      'Filipino Kitchen',
+                      85.0,
+                      4.8,
+                    ),
+                    _buildFoodCard('Beef Tapa', 'Morning Eats', 95.0, 4.6),
+                    _buildFoodCard('Pancit Canton', 'Noodle House', 65.0, 4.7),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard(String title, IconData icon, Color color) {
+    return Container(
+      width: 100,
+      margin: EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(String title, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(fontWeight: FontWeight.w600, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFoodCard(
+    String name,
+    String restaurant,
+    double price,
+    double rating,
+  ) {
+    return Container(
+      width: 160,
+      margin: EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Center(
+              child: Icon(Icons.fastfood, size: 40, color: Colors.grey[400]),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  restaurant,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '₱${price.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(Icons.star, size: 14, color: Colors.orange),
+                    Text(rating.toString(), style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Search Screen
+class SearchScreen extends StatefulWidget {
+  @override
+  _SearchScreenState createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<String> _recentSearches = [
+    'Chicken Adobo',
+    'School Supplies',
+    'Groceries',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('Search'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search for food, groceries, supplies...',
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.filter_list),
+                  onPressed: () {
+                    _showFilterDialog();
+                  },
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Recent Searches
+                  Text(
+                    'Recent Searches',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children: _recentSearches.map((search) {
+                      return Chip(
+                        label: Text(search),
+                        backgroundColor: Colors.white,
+                        onDeleted: () {
+                          setState(() {
+                            _recentSearches.remove(search);
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Popular Categories
+                  Text(
+                    'Popular Categories',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.5,
+                    children: [
+                      _buildSearchCategory(
+                        'Fast Food',
+                        Icons.fastfood,
+                        Colors.red,
+                      ),
+                      _buildSearchCategory(
+                        'Beverages',
+                        Icons.local_drink,
+                        Colors.blue,
+                      ),
+                      _buildSearchCategory(
+                        'Snacks',
+                        Icons.cookie,
+                        Colors.orange,
+                      ),
+                      _buildSearchCategory(
+                        'Office Supplies',
+                        Icons.create,
+                        Colors.purple,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchCategory(String title, IconData icon, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 32, color: color),
+          SizedBox(height: 8),
+          Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter Options',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Text('Price Range'),
+              RangeSlider(
+                values: RangeValues(0, 500),
+                max: 1000,
+                divisions: 10,
+                labels: RangeLabels('₱0', '₱500'),
+                onChanged: (values) {},
+              ),
+              SizedBox(height: 20),
+              Text('Distance'),
+              Slider(
+                value: 5,
+                max: 20,
+                divisions: 4,
+                label: '5 km',
+                onChanged: (value) {},
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Apply Filters'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Cart Screen
+class CartScreen extends StatefulWidget {
+  @override
+  _CartScreenState createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('My Orders'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.blue,
+          unselectedLabelColor: Colors.grey[600],
+          indicatorColor: Colors.blue,
+          tabs: [
+            Tab(text: 'Cart'),
+            Tab(text: 'Favorites'),
+            Tab(text: 'Saved'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [_buildCartTab(), _buildFavoritesTab(), _buildSavedTab()],
+      ),
+    );
+  }
+
+  Widget _buildCartTab() {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.all(16),
+            children: [
+              _buildCartItem('Chicken Adobo', 'Filipino Kitchen', 85.0, 2),
+              _buildCartItem('Beef Tapa', 'Morning Eats', 95.0, 1),
+              _buildCartItem('Notebook (5pcs)', 'School Store', 125.0, 1),
+            ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Total: ₱390.00',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  Spacer(),
+                  Text(
+                    'Delivery: ₱25.00',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showCheckoutDialog();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Proceed to Checkout',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCartItem(String name, String store, double price, int quantity) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.fastfood, color: Colors.grey[400]),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  store,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+                Text(
+                  '₱${price.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {},
+                icon: Icon(Icons.remove_circle_outline),
+                color: Colors.grey[600],
+              ),
+              Text(
+                quantity.toString(),
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Icon(Icons.add_circle_outline),
+                color: Colors.blue,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoritesTab() {
+    return ListView(
+      padding: EdgeInsets.all(16),
+      children: [
+        _buildFavoriteItem('Chicken Sisig', 'Grill Master', 120.0, 4.9),
+        _buildFavoriteItem('Lumpia Shanghai', 'Home Cooked', 80.0, 4.7),
+        _buildFavoriteItem('Buko Pie', 'Sweet Treats', 150.0, 4.8),
+      ],
+    );
+  }
+
+  Widget _buildFavoriteItem(
+    String name,
+    String store,
+    double price,
+    double rating,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.fastfood, color: Colors.grey[400]),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  store,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      '₱${price.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(Icons.star, size: 16, color: Colors.orange),
+                    Text(' ${rating}'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.favorite, color: Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSavedTab() {
+    return ListView(
+      padding: EdgeInsets.all(16),
+      children: [
+        _buildSavedItem('Weekly Grocery List', 'Saved for later ordering'),
+        _buildSavedItem('School Supplies Bundle', 'For next semester'),
+        _buildSavedItem('Birthday Party Package', 'Celebration essentials'),
+      ],
+    );
+  }
+
+  Widget _buildSavedItem(String title, String description) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.bookmark, color: Colors.blue),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          IconButton(onPressed: () {}, icon: Icon(Icons.more_vert)),
+        ],
+      ),
+    );
+  }
+
+  void _showCheckoutDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(20),
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Checkout',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Text('Delivery Address'),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('BSU Main Campus, Batangas City')),
+                    TextButton(onPressed: () {}, child: Text('Change')),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+              Text('Payment Method'),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.payment),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('Cash on Delivery')),
+                    TextButton(onPressed: () {}, child: Text('Change')),
+                  ],
+                ),
+              ),
+              Spacer(),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [Text('Subtotal'), Spacer(), Text('₱390.00')],
+                    ),
+                    Row(
+                      children: [
+                        Text('Delivery Fee'),
+                        Spacer(),
+                        Text('₱25.00'),
+                      ],
+                    ),
+                    Divider(),
+                    Row(
+                      children: [
+                        Text(
+                          'Total',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Spacer(),
+                        Text(
+                          '₱415.00',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Order placed successfully!')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Place Order',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Notifications Screen
+class NotificationsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('Activity'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(icon: Icon(Icons.mark_email_read), onPressed: () {}),
+        ],
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: [
+          _buildNotificationItem(
+            'Order Delivered',
+            'Your Chicken Adobo order has been delivered successfully!',
+            Icons.check_circle,
+            Colors.green,
+            '2 min ago',
+          ),
+          _buildNotificationItem(
+            'New Promotion',
+            'Get 20% off on your next grocery order. Limited time offer!',
+            Icons.local_offer,
+            Colors.orange,
+            '1 hour ago',
+          ),
+          _buildNotificationItem(
+            'Order Confirmed',
+            'Your advance order for tomorrow has been confirmed by Filipino Kitchen.',
+            Icons.restaurant,
+            Colors.blue,
+            '3 hours ago',
+          ),
+          _buildNotificationItem(
+            'Someone Bought a Meal',
+            'A kind soul bought a meal for students in need. Thank you for your generosity!',
+            Icons.favorite,
+            Colors.red,
+            '1 day ago',
+          ),
+          _buildNotificationItem(
+            'New Vendor Joined',
+            'Sweet Treats is now available on SpartaHub. Check out their desserts!',
+            Icons.store,
+            Colors.purple,
+            '2 days ago',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(
+    String title,
+    String message,
+    IconData icon,
+    Color color,
+    String time,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  time,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Profile Screen
+class ProfileScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Profile Header
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, size: 50, color: Colors.blue),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Juan Dela Cruz',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'BSU Student',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatItem('Orders', '23'),
+                        _buildStatItem('Saved', '8'),
+                        _buildStatItem('Points', '1,250'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Profile Options
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    _buildProfileOption(
+                      'My Orders',
+                      Icons.shopping_bag_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderHistoryScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildProfileOption(
+                      'Delivery Addresses',
+                      Icons.location_on_outlined,
+                      () {},
+                    ),
+                    _buildProfileOption(
+                      'Payment Methods',
+                      Icons.payment_outlined,
+                      () {},
+                    ),
+                    _buildProfileOption(
+                      'Become a Rider',
+                      Icons.delivery_dining_outlined,
+                      () {},
+                    ),
+                    _buildProfileOption(
+                      'Notifications',
+                      Icons.notifications_outlined,
+                      () {},
+                    ),
+                    _buildProfileOption(
+                      'Settings',
+                      Icons.settings_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SettingsScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildProfileOption(
+                      'Help & Support',
+                      Icons.help_outline,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HelpSupportScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildProfileOption('About', Icons.info_outline, () {}),
+                    SizedBox(height: 20),
+                    _buildProfileOption('Sign Out', Icons.logout, () {
+                      _showSignOutDialog(context);
+                    }, isDestructive: true),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileOption(
+    String title,
+    IconData icon,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isDestructive ? Colors.red : Colors.grey[700],
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isDestructive ? Colors.red : Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey[400],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sign Out'),
+          content: Text('Are you sure you want to sign out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => OnboardingScreen()),
+                  (route) => false,
+                );
+              },
+              child: Text('Sign Out', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// Order History Screen
+class OrderHistoryScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('Order History'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: [
+          _buildOrderItem(
+            'Order #SH001',
+            'Delivered',
+            '₱415.00',
+            'Dec 15, 2024',
+            Colors.green,
+            ['Chicken Adobo', 'Beef Tapa', 'Notebook (5pcs)'],
+          ),
+          _buildOrderItem(
+            'Order #SH002',
+            'On the way',
+            '₱235.00',
+            'Dec 14, 2024',
+            Colors.blue,
+            ['Pancit Canton', 'Iced Coffee'],
+          ),
+          _buildOrderItem(
+            'Order #SH003',
+            'Cancelled',
+            '₱180.00',
+            'Dec 13, 2024',
+            Colors.red,
+            ['Burger Meal'],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderItem(
+    String orderNumber,
+    String status,
+    String total,
+    String date,
+    Color statusColor,
+    List<String> items,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  orderNumber,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            items.join(', '),
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                total,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+              Spacer(),
+              Text(
+                date,
+                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Settings Screen
+class SettingsScreen extends StatefulWidget {
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _pushNotifications = true;
+  bool _emailNotifications = false;
+  bool _locationServices = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('Settings'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: [
+          _buildSettingsSection('Account', [
+            _buildSettingsItem('Edit Profile', Icons.person_outline, () {}),
+            _buildSettingsItem('Change Password', Icons.lock_outline, () {}),
+            _buildSettingsItem(
+              'Privacy Settings',
+              Icons.privacy_tip_outlined,
+              () {},
+            ),
+          ]),
+
+          _buildSettingsSection('Notifications', [
+            _buildSwitchItem(
+              'Push Notifications',
+              Icons.notifications_outlined,
+              _pushNotifications,
+              (value) {
+                setState(() {
+                  _pushNotifications = value;
+                });
+              },
+            ),
+            _buildSwitchItem(
+              'Email Notifications',
+              Icons.email_outlined,
+              _emailNotifications,
+              (value) {
+                setState(() {
+                  _emailNotifications = value;
+                });
+              },
+            ),
+          ]),
+
+          _buildSettingsSection('App Preferences', [
+            _buildSwitchItem(
+              'Location Services',
+              Icons.location_on_outlined,
+              _locationServices,
+              (value) {
+                setState(() {
+                  _locationServices = value;
+                });
+              },
+            ),
+            _buildSettingsItem('Language', Icons.language, () {}),
+            _buildSettingsItem('App Theme', Icons.palette_outlined, () {}),
+          ]),
+
+          _buildSettingsSection('Support', [
+            _buildSettingsItem(
+              'Report a Problem',
+              Icons.report_outlined,
+              () {},
+            ),
+            _buildSettingsItem(
+              'Terms of Service',
+              Icons.description_outlined,
+              () {},
+            ),
+            _buildSettingsItem('Privacy Policy', Icons.policy_outlined, () {}),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        ...children,
+        SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildSettingsItem(String title, IconData icon, VoidCallback onTap) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.grey[700]),
+        title: Text(title),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey[400],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildSwitchItem(
+    String title,
+    IconData icon,
+    bool value,
+    Function(bool) onChanged,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.grey[700]),
+        title: Text(title),
+        trailing: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: Colors.blue,
+        ),
+      ),
+    );
+  }
+}
+
+// Help & Support Screen
+class HelpSupportScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text('Help & Support'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Quick Actions
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Need Help?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'We\'re here to help you 24/7',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickHelpButton(
+                          'Live Chat',
+                          Icons.chat,
+                          Colors.white,
+                          Colors.blue,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickHelpButton(
+                          'Call Us',
+                          Icons.phone,
+                          Colors.blue,
+                          Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 24),
+
+            // FAQ Section
+            Text(
+              'Frequently Asked Questions',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+
+            _buildFAQItem(
+              'How do I track my order?',
+              'You can track your order in real-time through the app. Go to "My Orders" and select your active order to see its current status and location.',
+            ),
+            _buildFAQItem(
+              'What payment methods are accepted?',
+              'We accept cash on delivery, GCash, PayMaya, and major credit/debit cards. You can change your preferred payment method in the checkout screen.',
+            ),
+            _buildFAQItem(
+              'How does the "Buy a Meal for Someone" feature work?',
+              'Simply select this option during checkout, and your extra meal will be added to our community fund. Students in need can request these meals through our partner organizations at BSU.',
+            ),
+            _buildFAQItem(
+              'Can I schedule orders in advance?',
+              'Yes! Use our Advance Ordering system to place orders ahead of time. Perfect for busy schedules - your order will be ready for pickup at your chosen time.',
+            ),
+            _buildFAQItem(
+              'What areas do you deliver to?',
+              'We currently serve Batangas State University main campus and nearby residential areas. Delivery radius is approximately 5km from the campus.',
+            ),
+
+            SizedBox(height: 24),
+
+            // Contact Information
+            Text(
+              'Contact Information',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+
+            _buildContactItem(
+              'Customer Service',
+              '+63 912 345 6789',
+              Icons.phone,
+              Colors.green,
+            ),
+            _buildContactItem(
+              'Email Support',
+              'support@spartahub.com',
+              Icons.email,
+              Colors.blue,
+            ),
+            _buildContactItem(
+              'Emergency Hotline',
+              '+63 998 765 4321',
+              Icons.emergency,
+              Colors.red,
+            ),
+
+            SizedBox(height: 24),
+
+            // Report Issue Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  _showReportIssueDialog(context);
+                },
+                icon: Icon(Icons.report_problem_outlined),
+                label: Text('Report an Issue'),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.blue),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickHelpButton(
+    String title,
+    IconData icon,
+    Color backgroundColor,
+    Color textColor,
+  ) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: textColor, size: 20),
+          SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFAQItem(String question, String answer) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: ExpansionTile(
+        title: Text(
+          question,
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              answer,
+              style: TextStyle(color: Colors.grey[600], height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactItem(
+    String title,
+    String contact,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                ),
+                Text(
+                  contact,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+        ],
+      ),
+    );
+  }
+
+  void _showReportIssueDialog(BuildContext context) {
+    final TextEditingController _issueController = TextEditingController();
+    String _selectedCategory = 'Order Issue';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Report an Issue'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Category:'),
+                    SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items:
+                          [
+                            'Order Issue',
+                            'Payment Problem',
+                            'Delivery Issue',
+                            'App Bug',
+                            'Other',
+                          ].map((category) {
+                            return DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            );
+                          }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Text('Describe the issue:'),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: _issueController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Please provide details about the issue...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: EdgeInsets.all(12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Issue reported successfully. We\'ll get back to you soon!',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  child: Text('Submit Report'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// Detail Page Example (Food Item Detail)
+class FoodDetailScreen extends StatefulWidget {
+  final String foodName;
+  final String restaurant;
+  final double price;
+  final double rating;
+
+  FoodDetailScreen({
+    required this.foodName,
+    required this.restaurant,
+    required this.price,
+    required this.rating,
+  });
+
+  @override
+  _FoodDetailScreenState createState() => _FoodDetailScreenState();
+}
+
+class _FoodDetailScreenState extends State<FoodDetailScreen> {
+  int _quantity = 1;
+  bool _isFavorite = false;
+  String _selectedSize = 'Regular';
+  List<String> _selectedAddOns = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 300,
+            pinned: true,
+            backgroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isFavorite = !_isFavorite;
+                  });
+                },
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.orange, Colors.deepOrange],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(Icons.fastfood, size: 100, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Food Info
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.foodName,
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              widget.restaurant,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, size: 16, color: Colors.orange),
+                            SizedBox(width: 4),
+                            Text(
+                              widget.rating.toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Price
+                  Text(
+                    '₱${widget.price.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Description
+                  Text(
+                    'Description',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Delicious and authentic Filipino dish made with tender chicken cooked in soy sauce, vinegar, and aromatic spices. Served with steamed rice.',
+                    style: TextStyle(color: Colors.grey[600], height: 1.5),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Size Options
+                  Text(
+                    'Size',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _buildSizeOption(
+                        'Small',
+                        '₱${(widget.price * 0.8).toStringAsFixed(0)}',
+                      ),
+                      _buildSizeOption(
+                        'Regular',
+                        '₱${widget.price.toStringAsFixed(0)}',
+                      ),
+                      _buildSizeOption(
+                        'Large',
+                        '₱${(widget.price * 1.2).toStringAsFixed(0)}',
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Add-ons
+                  Text(
+                    'Add-ons',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  _buildAddOnOption('Extra Rice', 15),
+                  _buildAddOnOption('Iced Tea', 25),
+                  _buildAddOnOption('Extra Sauce', 10),
+
+                  SizedBox(height: 24),
+
+                  // Quantity Selector
+                  Row(
+                    children: [
+                      Text(
+                        'Quantity',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Spacer(),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: _quantity > 1
+                                ? () {
+                                    setState(() {
+                                      _quantity--;
+                                    });
+                                  }
+                                : null,
+                            icon: Icon(Icons.remove_circle_outline),
+                            color: Colors.blue,
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _quantity.toString(),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _quantity++;
+                              });
+                            },
+                            icon: Icon(Icons.add_circle_outline),
+                            color: Colors.blue,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Added to cart!')));
+                },
+                icon: Icon(Icons.shopping_cart_outlined),
+                label: Text('Add to Cart'),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Colors.blue),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Order placed!')));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Order Now',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSizeOption(String size, String price) {
+    bool isSelected = _selectedSize == size;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedSize = size;
+          });
+        },
+        child: Container(
+          margin: EdgeInsets.only(right: size != 'Large' ? 8 : 0),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey[100],
+            border: Border.all(
+              color: isSelected ? Colors.blue : Colors.grey[300]!,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              Text(
+                size,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.blue : Colors.black,
+                ),
+              ),
+              Text(
+                price,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddOnOption(String name, double price) {
+    bool isSelected = _selectedAddOns.contains(name);
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      child: CheckboxListTile(
+        value: isSelected,
+        onChanged: (bool? value) {
+          setState(() {
+            if (value == true) {
+              _selectedAddOns.add(name);
+            } else {
+              _selectedAddOns.remove(name);
+            }
+          });
+        },
+        title: Text(name),
+        subtitle: Text('+ ₱${price.toStringAsFixed(0)}'),
+        activeColor: Colors.blue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        tileColor: Colors.grey[50],
+      ),
+    );
+  }
+}
