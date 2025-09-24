@@ -43,6 +43,7 @@ class Products extends StatelessWidget {
               final price = product['price'];
 
               return Card(
+                color: Colors.white,
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   title: Text(
