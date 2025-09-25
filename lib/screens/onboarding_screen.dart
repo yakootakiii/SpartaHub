@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/onboarding_data.dart';
 import '../widgets/onboarding_page.dart';
 import 'authentication_screen.dart';
-import 'main_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -108,19 +107,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: Colors.white,
                         ),
                       ),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => MainScreen()),
-                      );
-                    },
-                    child: Text(
-                      'Skip for now',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                   ),
                 ],

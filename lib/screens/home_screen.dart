@@ -7,13 +7,6 @@ import 'dart:async';
 import 'package:spartahubdev/widgets/food_card.dart';
 import 'package:spartahubdev/widgets/restaurant_card.dart';
 
-/// HomeScreen with lazy loading functionality for food items
-///
-/// Features:
-/// - Lazy loading: Loads more items as user scrolls
-/// - Pull-to-refresh: Refresh data by pulling down
-/// - Shimmer loading: Shows skeleton cards while loading
-/// - Pagination: Loads items in pages with different data
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -112,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Good Morning!',
+                            'Hello!',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -271,38 +264,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // SizedBox(height: 24),
-
-                // Categories
-                // Padding(
-                //   padding: EdgeInsets.symmetric(horizontal: 16),
-                //   child: Text(
-                //     'Categories',
-                //     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                //   ),
-                // ),
-                // SizedBox(height: 16),
-                // SizedBox(
-                //   height: 120,
-                //   child: ListView(
-                //     scrollDirection: Axis.horizontal,
-                //     padding: EdgeInsets.symmetric(horizontal: 16),
-                //     children: [
-                //       _buildCategoryCard('Meals', Icons.restaurant, Colors.red),
-                //       _buildCategoryCard(
-                //         'Groceries',
-                //         Icons.shopping_basket,
-                //         Colors.green,
-                //       ),
-                //       _buildCategoryCard('Supplies', Icons.school, Colors.blue),
-                //       _buildCategoryCard(
-                //         'Essentials',
-                //         Icons.local_convenience_store,
-                //         Colors.purple,
-                //       ),
-                //     ],
-                //   ),
-                // ),
                 SizedBox(height: 24),
 
                 // Popular Items
