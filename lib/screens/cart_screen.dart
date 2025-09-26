@@ -80,12 +80,6 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
 
               final docs = snapshot.data!.docs;
 
-              // Compute total
-              double total = docs.fold(0, (sum, doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return sum + (data['price'] ?? 0) * (data['quantity'] ?? 1);
-              });
-
               return ListView.builder(
                 padding: EdgeInsets.all(16),
                 itemCount: docs.length,
@@ -598,8 +592,8 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
                           'createdAt': FieldValue.serverTimestamp(),
                           'items': items,
                           'subtotal': subtotal,
-                          'deliveryFee': 25,
-                          'total': subtotal + 25,
+                          'deliveryFee': 25.0,
+                          'total': subtotal + 25.0,
                           'deliveryAddress': 'CICS Building, Room 106',
                         });
 

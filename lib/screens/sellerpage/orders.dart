@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -62,110 +64,153 @@ class _OrdersTab extends StatefulWidget {
 
 class _OrdersTabState extends State<_OrdersTab>
     with AutomaticKeepAliveClientMixin {
-  final List<Map<String, dynamic>> _orders = [
-    {
-      "title": "Order 1",
-      "items": [
-        {
-          "name": "1 Kanin 1 Ulam",
-          "store": "Karinderya",
-          "price": 50.0,
-          "qty": 1,
-        },
-        {
-          "name": "2 Kanin 2 Ulam",
-          "store": "Karinderya",
-          "price": 75.0,
-          "qty": 1,
-        },
-      ],
-    },
-    {
-      "title": "Order 2",
-      "items": [
-        {
-          "name": "Notebook (5pcs)",
-          "store": "School Store",
-          "price": 125.0,
-          "qty": 1,
-        },
-      ],
-    },
-    {
-      "title": "Order 3",
-      "items": [
-        {
-          "name": "Chicken BBQ",
-          "store": "Grill Master",
-          "price": 120.0,
-          "qty": 2,
-        },
-      ],
-    },
-  ];
-
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _orders.length,
-      itemBuilder: (context, index) {
-        final order = _orders[index];
-        return _buildOrderCard(order["title"], order["items"]);
+
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('sellerId', isEqualTo: userId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No orders yet.'));
+        }
+
+        final orders = snapshot.data!.docs;
+
+        // Group orders by sellerId (from first item in each order)
+        final Map<String, List<QueryDocumentSnapshot>> groupedOrders = {};
+        for (var doc in orders) {
+          final data = doc.data() as Map<String, dynamic>;
+          final items = List<Map<String, dynamic>>.from(data['items'] ?? []);
+          if (items.isEmpty) continue;
+
+          final sellerId = items.first['sellerId'] ?? 'unknown';
+          if (!groupedOrders.containsKey(sellerId)) {
+            groupedOrders[sellerId] = [];
+          }
+          groupedOrders[sellerId]!.add(doc);
+        }
+
+        final groupedList = groupedOrders.entries.toList();
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: groupedList.length,
+          itemBuilder: (context, index) {
+            // final sellerId = groupedList[index].key;
+            final sellerOrders = groupedList[index].value;
+
+            // Use sellerName from first item of first order
+            final sellerName =
+                (sellerOrders.first.data()
+                    as Map<String, dynamic>)['items'][0]['sellerName'] ??
+                'Unknown Seller';
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sellerName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...sellerOrders.map((orderDoc) {
+                  final orderData = orderDoc.data() as Map<String, dynamic>;
+                  final orderTitle = orderDoc.id.substring(0, 6);
+                  final items = List<Map<String, dynamic>>.from(
+                    orderData['items'] ?? [],
+                  );
+                  final subtotal = items.fold<double>(
+                    0,
+                    (sum, item) =>
+                        sum + ((item['price'] ?? 0) * (item['quantity'] ?? 1)),
+                  );
+                  final deliveryFee = orderData['deliveryFee'] ?? 25;
+                  final total = subtotal + deliveryFee;
+
+                  return GestureDetector(
+                    onTap: () {
+                      _showOrderDetails(
+                        orderDoc.id,
+                        sellerName,
+                        items,
+                        subtotal,
+                        deliveryFee,
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.receipt_long,
+                            color: Color(0xFFCD0000),
+                            size: 40,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Order #$orderTitle',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '₱${total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        );
       },
     );
   }
 
-  Widget _buildOrderCard(String title, List<Map<String, dynamic>> items) {
-    return GestureDetector(
-      onTap: () => _showOrderDetails(context, title, items),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.receipt_long, color: Color(0xFFCD0000), size: 40),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showOrderDetails(
-    BuildContext context,
-    String orderTitle,
+    String orderId, // 👈 add orderId
+    String sellerName,
     List<Map<String, dynamic>> items,
+    double subtotal,
+    double deliveryFee,
   ) {
-    double subtotal = items.fold(
-      0,
-      (sum, item) => sum + (item["price"] * item["qty"]),
-    );
-    double deliveryFee = 25.0;
     double total = subtotal + deliveryFee;
 
     showModalBottomSheet(
@@ -178,9 +223,8 @@ class _OrdersTabState extends State<_OrdersTab>
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
+            shrinkWrap: true,
             children: [
               Center(
                 child: Container(
@@ -193,68 +237,17 @@ class _OrdersTabState extends State<_OrdersTab>
                   ),
                 ),
               ),
+              // 🔹 Title shows the order number instead of seller name
               Text(
-                'Order Details',
-                style: Theme.of(context).textTheme.titleLarge,
+                'Order #${orderId.substring(0, 6)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
               const SizedBox(height: 16),
 
-              // 👇 Orderer
-              Row(
-                children: [
-                  const Icon(Icons.person, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Orderer: Nik Makino',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // 👇 Delivery address
-              Row(
-                children: [
-                  const Icon(Icons.location_on, color: Colors.red),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Delivery Address: CICS Building, Room 106',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // 👇 Deliverer
-              Row(
-                children: [
-                  const Icon(Icons.delivery_dining, color: Colors.green),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Deliverer: Awit Yah',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // 👇 Order number
-              Text(
-                orderTitle,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Example contents of the order
-              Text('Items:', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
+              // Items list
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -262,29 +255,47 @@ class _OrdersTabState extends State<_OrdersTab>
                 itemBuilder: (context, index) {
                   final item = items[index];
                   return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(item["name"]),
-                    subtitle: Text('${item["store"]}  x${item["qty"]}'),
+                    title: Text(item['foodName'] ?? 'Unnamed'),
+                    subtitle: Text('x${item['quantity'] ?? 1}'),
                     trailing: Text(
-                      '₱${(item["price"] * item["qty"]).toStringAsFixed(2)}',
+                      '₱${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(2)}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   );
                 },
               ),
-
-              const SizedBox(height: 16),
-
-              // 👇 Total
+              const Divider(),
               Row(
                 children: [
                   const Text(
-                    "Total",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    'Subtotal:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Text('₱${subtotal.toStringAsFixed(2)}'),
+                ],
+              ),
+              Row(
+                children: [
+                  const Text('Delivery Fee:'),
+                  const Spacer(),
+                  Text('₱${deliveryFee.toStringAsFixed(2)}'),
+                ],
+              ),
+              const Divider(),
+              Row(
+                children: [
+                  const Text(
+                    'Total:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.green,
+                    ),
                   ),
                   const Spacer(),
                   Text(
-                    "₱${total.toStringAsFixed(2)}",
+                    '₱${total.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -293,35 +304,34 @@ class _OrdersTabState extends State<_OrdersTab>
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
 
-              // 👇 Accept Order Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Order accepted successfully!'),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFCD0000),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              // 🔹 Accept Order button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Accept Order',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                ),
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection('orders')
+                      .doc(orderId)
+                      .update({'status': 'Accepted'});
+
+                  Navigator.pop(context); // close sheet
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order marked as Accepted')),
+                  );
+                },
+                child: const Text(
+                  'Accept Order',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
