@@ -5,12 +5,14 @@ class FoodCard extends StatelessWidget {
   final String name;
   final String restaurant;
   final double price;
+  final String sellerId;
 
   const FoodCard({
     super.key,
     required this.name,
     required this.restaurant,
     required this.price,
+    required this.sellerId,
   });
 
   @override
@@ -24,6 +26,7 @@ class FoodCard extends StatelessWidget {
               foodName: name,
               restaurant: restaurant,
               price: price,
+              sellerId: sellerId,
             ),
           ),
         );

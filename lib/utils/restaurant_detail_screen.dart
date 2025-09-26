@@ -160,6 +160,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                           name: data['name'] ?? 'Unnamed',
                           restaurant: widget.name,
                           price: price,
+                          sellerId: widget.sellerId,
                         );
                       }
                     },
@@ -218,6 +219,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                         name: data['name'] ?? 'Unnamed',
                         restaurant: widget.name,
                         price: price,
+                        sellerId: widget.sellerId,
                       );
                     },
                   );

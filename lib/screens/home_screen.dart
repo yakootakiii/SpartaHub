@@ -422,6 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 name: item['name'],
                                 restaurant: sellerName, // ✅ now real name
                                 price: item['price'],
+                                sellerId: item['sellerRef'].id,
                               );
                             },
                           );
@@ -508,6 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 name: item['name'],
                                 restaurant: sellerName, // ✅ now real name
                                 price: item['price'],
+                                sellerId: item['sellerRef'].id,
                               );
                             },
                           );

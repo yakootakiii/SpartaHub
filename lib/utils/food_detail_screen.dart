@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FoodDetailScreen extends StatefulWidget {
   final String foodName;
   final String restaurant;
   final double price;
+  final String sellerId;
 
   const FoodDetailScreen({
     super.key,
     required this.foodName,
     required this.restaurant,
     required this.price,
+    required this.sellerId,
   });
 
   @override
@@ -228,25 +232,76 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Added to cart!')));
+                onPressed: () async {
+                  final user = FirebaseAuth.instance.currentUser;
+
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Please log in to add items to your cart.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final cartRef = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .collection('cart');
+
+                  final cartItem = {
+                    'foodName': widget.foodName, // 👈 match orders
+                    'storeName': widget.restaurant, // 👈 match orders
+                    'price': widget.price,
+                    'quantity': 1,
+                    'createdAt': FieldValue.serverTimestamp(),
+                    'sellerId':
+                        widget.sellerId, // 👈 TODO: pass this into the widget
+                    'sellerName':
+                        widget.restaurant, // 👈 fallback if sellerName = store
+                  };
+
+                  // check if item already exists
+                  final existing = await cartRef
+                      .where('foodName', isEqualTo: cartItem['foodName'])
+                      .where('storeName', isEqualTo: cartItem['storeName'])
+                      .limit(1)
+                      .get();
+
+                  if (existing.docs.isNotEmpty) {
+                    final docId = existing.docs.first.id;
+                    final currentQty = existing.docs.first['quantity'] ?? 1;
+                    await cartRef.doc(docId).update({
+                      'quantity': currentQty + 1,
+                    });
+                  } else {
+                    await cartRef.add(cartItem);
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Added to cart!')),
+                  );
                 },
-                icon: Icon(Icons.shopping_cart_outlined, color: Colors.black),
-                label: Text(
+                icon: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Colors.black,
+                ),
+                label: const Text(
                   'Add to Cart',
                   style: TextStyle(color: Colors.black),
                 ),
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: Color(0xFFCD0000)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Color(0xFFCD0000)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
             ),
+
             SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
