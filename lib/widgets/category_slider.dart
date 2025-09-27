@@ -57,7 +57,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(30),
                       color: active
-                          ? Colors.red.withOpacity(0.06)
+                          ? Colors.red.withValues(alpha: 0.06)
                           : Colors.transparent,
                     ),
                     child: Text(

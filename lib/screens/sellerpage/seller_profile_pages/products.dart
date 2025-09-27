@@ -161,7 +161,7 @@ class Products extends StatelessWidget {
 
               // Category Dropdown
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 items: categories
                     .map(
                       (cat) => DropdownMenuItem(value: cat, child: Text(cat)),

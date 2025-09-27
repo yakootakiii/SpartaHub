@@ -191,7 +191,7 @@ class _OrdersTabState extends State<_OrdersTab>
                       ),
                     ),
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 16),
               ],
             );

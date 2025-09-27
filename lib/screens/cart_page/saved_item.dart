@@ -14,7 +14,7 @@ class SavedItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5),
         ],
       ),
       child: Row(
@@ -22,7 +22,7 @@ class SavedItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFCD0000).withOpacity(0.1),
+              color: const Color(0xFFCD0000).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.bookmark, color: Color(0xFFCD0000)),

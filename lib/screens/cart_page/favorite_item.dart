@@ -52,7 +52,10 @@ class _FavoriteItemState extends State<FavoriteItem> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 5,
+            ),
           ],
         ),
         child: Row(
