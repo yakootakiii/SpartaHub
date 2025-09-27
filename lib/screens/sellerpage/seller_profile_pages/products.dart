@@ -5,6 +5,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 class Products extends StatelessWidget {
   const Products({super.key});
 
+  Future<String> getSellerName(String sellerId) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('sellers')
+        .doc(sellerId)
+        .get();
+
+    if (doc.exists) {
+      return doc.data()?['fullName'] ?? 'Unknown Seller';
+    } else {
+      return 'Unknown Seller';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sellerId = FirebaseAuth.instance.currentUser!.uid;
@@ -19,9 +32,8 @@ class Products extends StatelessWidget {
 
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('sellers')
-            .doc(sellerId)
             .collection('products')
+            .where('sellerId', isEqualTo: sellerId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -66,17 +78,24 @@ class Products extends StatelessWidget {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFCD0000),
-        onPressed: () {
-          _showAddProductSheet(context, sellerId);
+        onPressed: () async {
+          final sellerName = await getSellerName(sellerId);
+          _showAddProductSheet(context, sellerId, sellerName);
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  void _showAddProductSheet(BuildContext context, String sellerId) {
+  void _showAddProductSheet(
+    BuildContext context,
+    String sellerId,
+    String sellerName,
+  ) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
+    String selectedCategory = 'Meals'; // default category
+    final categories = ['Meals', 'Snacks', 'Drinks'];
 
     showModalBottomSheet(
       context: context,
@@ -114,6 +133,7 @@ class Products extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Product Name
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
@@ -125,6 +145,7 @@ class Products extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Price
               TextField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
@@ -136,9 +157,29 @@ class Products extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
 
+              // Category Dropdown
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                items: categories
+                    .map(
+                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) selectedCategory = value;
+                },
+                decoration: InputDecoration(
+                  labelText: "Category",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
 
+              // Add Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -157,15 +198,33 @@ class Products extends StatelessWidget {
                       return;
                     }
 
-                    await FirebaseFirestore.instance
+                    // Generate a new doc ID
+                    final productRefSeller = FirebaseFirestore.instance
                         .collection('sellers')
                         .doc(sellerId)
                         .collection('products')
-                        .add({
-                          'name': name,
-                          'price': price,
-                          'createdAt': FieldValue.serverTimestamp(),
-                        });
+                        .doc();
+                    final productId = productRefSeller.id;
+
+                    final productData = {
+                      'name': name,
+                      'price': price,
+                      'sellerId': sellerId,
+                      'sellerName': sellerName,
+                      'category': selectedCategory,
+                      'createdAt': FieldValue.serverTimestamp(),
+                    };
+
+                    // Batch write to both collections
+                    final batch = FirebaseFirestore.instance.batch();
+                    batch.set(productRefSeller, productData);
+                    batch.set(
+                      FirebaseFirestore.instance
+                          .collection('products')
+                          .doc(productId),
+                      productData,
+                    );
+                    await batch.commit();
 
                     Navigator.pop(context);
                   },

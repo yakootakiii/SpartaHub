@@ -343,181 +343,144 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 SizedBox(height: 20),
 
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Quick Picks for You',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Spacer(),
+                      TextButton(onPressed: () {}, child: Text('See All')),
+                    ],
+                  ),
+                ),
+
+                SizedBox(
+                  height: 210,
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collectionGroup('products')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: 3,
+                          itemBuilder: (context, index) => _buildShimmerCard(),
+                        );
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text("No products available"),
+                        );
+                      }
+
+                      // Map products and include sellerName and sellerId from product doc
+                      final products = snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return {
+                          'id': doc.id,
+                          'name': data['name'] ?? 'Unnamed',
+                          'price': (data['price'] is num)
+                              ? (data['price'] as num).toDouble()
+                              : 0.0,
+                          'sellerName': data['sellerName'] ?? 'Unknown Seller',
+                          'sellerId': data['sellerId'],
+                        };
+                      }).toList();
+
+                      products.shuffle();
+                      final limited = products.take(5).toList();
+
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: limited.length,
+                        itemBuilder: (context, index) {
+                          final item = limited[index];
+                          return FoodCard(
+                            key: ValueKey(item['id']),
+                            name: item['name'],
+                            restaurant: item['sellerName'],
+                            price: item['price'],
+                            sellerId: item['sellerId'],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                SizedBox(height: 20),
+
+                SizedBox(
+                  height: 210,
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collectionGroup('products')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: 3,
+                          itemBuilder: (context, index) => _buildShimmerCard(),
+                        );
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text("No products available"),
+                        );
+                      }
+
+                      // Map products and include sellerName and sellerId from product doc
+                      final products = snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return {
+                          'id': doc.id,
+                          'name': data['name'] ?? 'Unnamed',
+                          'price': (data['price'] is num)
+                              ? (data['price'] as num).toDouble()
+                              : 0.0,
+                          'sellerName': data['sellerName'] ?? 'Unknown Seller',
+                          'sellerId': data['sellerId'],
+                        };
+                      }).toList();
+
+                      products.shuffle();
+                      final limited = products.take(5).toList();
+
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: limited.length,
+                        itemBuilder: (context, index) {
+                          final item = limited[index];
+                          return FoodCard(
+                            key: ValueKey(item['id']),
+                            name: item['name'],
+                            restaurant: item['sellerName'],
+                            price: item['price'],
+                            sellerId: item['sellerId'],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                SizedBox(height: 20),
+
                 CategorySelector(),
-
-                SizedBox(height: 20),
-
-                SizedBox(
-                  height: 210,
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collectionGroup('products')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: 3,
-                          itemBuilder: (context, index) => _buildShimmerCard(),
-                        );
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Text("No products available"),
-                        );
-                      }
-
-                      final products = snapshot.data!.docs.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        final sellerRef = doc
-                            .reference
-                            .parent
-                            .parent; // 👈 the seller document
-                        return {
-                          'id': doc.id,
-                          'name': data['name'] ?? 'Unnamed',
-                          'price': (data['price'] is num)
-                              ? (data['price'] as num).toDouble()
-                              : 0.0,
-                          'sellerRef': sellerRef,
-                        };
-                      }).toList();
-
-                      products.shuffle();
-                      final limited = products.take(5).toList();
-
-                      return ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: limited.length,
-                        itemBuilder: (context, index) {
-                          final item = limited[index];
-
-                          // 🔥 Nested FutureBuilder to fetch seller name
-                          return FutureBuilder<DocumentSnapshot>(
-                            future: (item['sellerRef'] as DocumentReference)
-                                .get(),
-                            builder: (context, sellerSnap) {
-                              if (!sellerSnap.hasData) {
-                                return const SizedBox(
-                                  width: 120,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              final sellerData =
-                                  sellerSnap.data!.data()
-                                      as Map<String, dynamic>?;
-                              final sellerName =
-                                  sellerData?['fullName'] ?? 'Unknown Seller';
-
-                              return FoodCard(
-                                key: ValueKey(item['id']),
-                                name: item['name'],
-                                restaurant: sellerName, // ✅ now real name
-                                price: item['price'],
-                                sellerId: item['sellerRef'].id,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-
-                SizedBox(height: 20),
-
-                SizedBox(
-                  height: 210,
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collectionGroup('products')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: 3,
-                          itemBuilder: (context, index) => _buildShimmerCard(),
-                        );
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Text("No products available"),
-                        );
-                      }
-
-                      final products = snapshot.data!.docs.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        final sellerRef = doc
-                            .reference
-                            .parent
-                            .parent; // 👈 the seller document
-                        return {
-                          'id': doc.id,
-                          'name': data['name'] ?? 'Unnamed',
-                          'price': (data['price'] is num)
-                              ? (data['price'] as num).toDouble()
-                              : 0.0,
-                          'sellerRef': sellerRef,
-                        };
-                      }).toList();
-
-                      products.shuffle();
-                      final limited = products.take(5).toList();
-
-                      return ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: limited.length,
-                        itemBuilder: (context, index) {
-                          final item = limited[index];
-
-                          // 🔥 Nested FutureBuilder to fetch seller name
-                          return FutureBuilder<DocumentSnapshot>(
-                            future: (item['sellerRef'] as DocumentReference)
-                                .get(),
-                            builder: (context, sellerSnap) {
-                              if (!sellerSnap.hasData) {
-                                return const SizedBox(
-                                  width: 120,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              final sellerData =
-                                  sellerSnap.data!.data()
-                                      as Map<String, dynamic>?;
-                              final sellerName =
-                                  sellerData?['fullName'] ?? 'Unknown Seller';
-
-                              return FoodCard(
-                                key: ValueKey(item['id']),
-                                name: item['name'],
-                                restaurant: sellerName, // ✅ now real name
-                                price: item['price'],
-                                sellerId: item['sellerRef'].id,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
 
                 SizedBox(height: 20),
 

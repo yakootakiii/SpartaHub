@@ -22,10 +22,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
 
   Stream<QuerySnapshot> _getProductsStream() {
     return FirebaseFirestore.instance
-        .collection('sellers')
-        .doc(widget.sellerId)
         .collection('products')
-        .orderBy('createdAt', descending: true)
+        .where('sellerId', isEqualTo: widget.sellerId)
         .snapshots();
   }
 
@@ -217,9 +215,11 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                       return FoodCard(
                         key: ValueKey(products[index].id),
                         name: data['name'] ?? 'Unnamed',
-                        restaurant: widget.name,
+                        restaurant:
+                            data['sellerName'] ??
+                            'Unknown', // use sellerName field
                         price: price,
-                        sellerId: widget.sellerId,
+                        sellerId: data['sellerId'], // already in product
                       );
                     },
                   );

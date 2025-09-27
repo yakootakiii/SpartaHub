@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/food_card.dart'; // your FoodCard widget
+// if you navigate inside FoodCard
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -15,12 +18,58 @@ class _SearchScreenState extends State<SearchScreen> {
     'Groceries',
   ];
 
+  bool _isSearching = false;
+  bool _loading = false;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _searchResults = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      // 👈 go back to default view when cleared
+      setState(() {
+        _isSearching = false;
+        _searchResults = [];
+      });
+    } else {
+      _performSearch(query);
+    }
+  }
+
+  Future<void> _performSearch(String query) async {
+    setState(() => _loading = true);
+
+    final snap = await FirebaseFirestore.instance
+        .collection('products')
+        .where('name', isGreaterThanOrEqualTo: query)
+        .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+        .get();
+
+    setState(() {
+      _isSearching = true;
+      _searchResults = snap.docs;
+      _loading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Search',
           style: TextStyle(
             color: Color(0xFFCD0000),
@@ -32,20 +81,18 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search bar
           Container(
             color: Colors.white,
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search for food, groceries, supplies...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.filter_list),
-                  onPressed: () {
-                    _showFilterDialog();
-                  },
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: _showFilterDialog,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -58,94 +105,109 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Recent Searches
-                  Text(
-                    'Recent Searches',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    children: _recentSearches.map((search) {
-                      return Chip(
-                        label: Text(search),
-                        backgroundColor: Colors.white,
-                        onDeleted: () {
-                          setState(() {
-                            _recentSearches.remove(search);
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-
-                  SizedBox(height: 24),
-
-                  // Popular Categories
-                  Text(
-                    'Popular Categories',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.5,
-                    children: [
-                      _buildSearchCategory(
-                        'Karinderya',
-                        Icons.fastfood,
-                        Colors.grey[800]!,
-                      ),
-                      _buildSearchCategory(
-                        'Cafes',
-                        Icons.coffee,
-                        Colors.grey[800]!,
-                      ),
-                      _buildSearchCategory(
-                        'Snacks',
-                        Icons.cookie,
-                        Colors.grey[800]!,
-                      ),
-                      _buildSearchCategory(
-                        'Supplies',
-                        Icons.create,
-                        Colors.grey[800]!,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            child: _isSearching
+                ? _buildSearchResults()
+                : _buildDefaultContent(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchCategory(String title, IconData icon, Color color) {
+  // === Default view ===
+  Widget _buildDefaultContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Searches',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: _recentSearches.map((search) {
+              return Chip(
+                label: Text(search),
+                backgroundColor: Colors.white,
+                onDeleted: () {
+                  setState(() => _recentSearches.remove(search));
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+
+          const Text(
+            'Popular Categories',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: [
+              _buildSearchCategory('Karinderya', Icons.fastfood),
+              _buildSearchCategory('Cafes', Icons.coffee),
+              _buildSearchCategory('Snacks', Icons.cookie),
+              _buildSearchCategory('Supplies', Icons.create),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // === Search results view ===
+  Widget _buildSearchResults() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_searchResults.isEmpty) {
+      return const Center(child: Text('No matching products.'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _searchResults.length,
+      itemBuilder: (context, i) {
+        final data = _searchResults[i].data();
+        final price = (data['price'] as num?)?.toDouble() ?? 0.0;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: FoodCard(
+            name: data['name'] as String? ?? '',
+            restaurant: data['sellerName'] as String? ?? '',
+            price: price,
+            sellerId: data['sellerId'] as String? ?? '',
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchCategory(String title, IconData icon) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 32, color: color),
-          SizedBox(height: 8),
-          Text(title, style: TextStyle(fontWeight: FontWeight.w600)),
+          Icon(icon, size: 32, color: Colors.grey[800]),
+          const SizedBox(height: 8),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -154,31 +216,31 @@ class _SearchScreenState extends State<SearchScreen> {
   void _showFilterDialog() {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Filter Options',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 20),
-              Text('Price Range'),
+              const SizedBox(height: 20),
+              const Text('Price Range'),
               RangeSlider(
-                values: RangeValues(0, 500),
+                values: const RangeValues(0, 500),
                 max: 1000,
                 divisions: 10,
-                labels: RangeLabels('₱0', '₱500'),
+                labels: const RangeLabels('₱0', '₱500'),
                 onChanged: (values) {},
               ),
-              SizedBox(height: 20),
-              Text('Distance'),
+              const SizedBox(height: 20),
+              const Text('Distance'),
               Slider(
                 value: 5,
                 max: 20,
@@ -186,12 +248,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 label: '5 km',
                 onChanged: (value) {},
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Apply Filters'),
+                  child: const Text('Apply Filters'),
                 ),
               ),
             ],
