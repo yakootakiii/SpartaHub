@@ -41,7 +41,7 @@ class AboutApp extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            const Text('Your Name or Company', style: TextStyle(fontSize: 16)),
+            const Text('Group 6', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 16),
             const Text(
               'Description',
