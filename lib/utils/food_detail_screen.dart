@@ -27,6 +27,28 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   final List<String> _selectedAddOns = [];
 
   @override
+  void initState() {
+    super.initState();
+    _checkFavorite();
+  }
+
+  void _checkFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final favDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .doc(widget.foodName) // Use foodName as document ID
+        .get();
+
+    setState(() {
+      _isFavorite = favDoc.exists;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,7 +64,30 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: _isFavorite ? Colors.red : Colors.white,
                 ),
-                onPressed: () {
+                onPressed: () async {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) return;
+
+                  final favRef = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .collection('favorites')
+                      .doc(widget.foodName);
+
+                  if (_isFavorite) {
+                    // Remove from favorites
+                    await favRef.delete();
+                  } else {
+                    // Add to favorites
+                    await favRef.set({
+                      'foodName': widget.foodName,
+                      'restaurant': widget.restaurant,
+                      'price': widget.price,
+                      'sellerId': widget.sellerId,
+                      'addedAt': FieldValue.serverTimestamp(),
+                    });
+                  }
+
                   setState(() {
                     _isFavorite = !_isFavorite;
                   });
@@ -174,30 +219,6 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     ],
                   ),
 
-                  // SizedBox(height: 24),
-
-                  // // Size Options
-                  // Text(
-                  //   'Size',
-                  //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  // ),
-                  // SizedBox(height: 12),
-                  // Row(
-                  //   children: [
-                  //     _buildSizeOption(
-                  //       'Small',
-                  //       '₱${(widget.price * 0.8).toStringAsFixed(0)}',
-                  //     ),
-                  //     _buildSizeOption(
-                  //       'Regular',
-                  //       '₱${widget.price.toStringAsFixed(0)}',
-                  //     ),
-                  //     _buildSizeOption(
-                  //       'Large',
-                  //       '₱${(widget.price * 1.2).toStringAsFixed(0)}',
-                  //     ),
-                  //   ],
-                  // ),
                   SizedBox(height: 24),
 
                   // Add-ons
