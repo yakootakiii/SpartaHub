@@ -25,7 +25,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   @override
   void initState() {
     super.initState();
-    _auth = FirebaseAuth.instance; // Safe after Firebase.initializeApp()
+    _auth = FirebaseAuth.instance;
   }
 
   @override
@@ -193,12 +193,12 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         final user = userCredential.user;
 
         if (user != null) {
-          // ✅ Save user profile using UserService
+          // Save user profile using UserService
           await UserService.createUserProfile(user, fullName, email);
         }
       }
 
-      // ✅ Navigate to main screen
+      // Navigate to main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => MainScreen()),
@@ -210,7 +210,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     }
   }
 
-  /// 🔹 Build text field widget
+  /// Build text field widget
   Widget _buildTextField(
     String label,
     IconData icon, {

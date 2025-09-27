@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart'; // adjust path if needed
+import 'package:flutter/material.dart';
 
 class BuildItem extends StatelessWidget {
   final String orderNumber;
@@ -27,10 +27,7 @@ class BuildItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1), // ✅ fixed
-            blurRadius: 5,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5),
         ],
       ),
       child: Column(

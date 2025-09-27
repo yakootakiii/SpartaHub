@@ -4,8 +4,8 @@ import '../widgets/shimmer_card.dart';
 import '../widgets/food_card.dart';
 
 class RestaurantDetailScreen extends StatefulWidget {
-  final String sellerId; // Firestore seller ID
-  final String name; // Restaurant name
+  final String sellerId;
+  final String name;
 
   const RestaurantDetailScreen({
     super.key,
@@ -71,7 +71,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
               ),
             ),
 
-            // 🏷️ Section Header
+            // Section Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: const Text(
@@ -80,7 +80,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
               ),
             ),
 
-            // 🎉 Promo + horizontal products
+            // Promo + horizontal products
             SizedBox(
               height: 210,
               child: StreamBuilder<QuerySnapshot>(
@@ -169,7 +169,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
 
             const SizedBox(height: 16),
 
-            // 🗂️ All products list
+            // All products list
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: const Text(

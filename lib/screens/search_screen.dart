@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../widgets/food_card.dart'; // your FoodCard widget
-// if you navigate inside FoodCard
+import '../widgets/food_card.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -164,7 +163,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // === Search results view ===
+  // Search results view
   Widget _buildSearchResults() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());

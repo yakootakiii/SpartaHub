@@ -3,9 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'food_card.dart';
 import 'shimmer_card.dart';
 
-/// Set [useCollectionGroup] to true if your 'products' are subcollections
-/// (for example: sellers/{sellerId}/products/{productDoc}).
-/// If 'products' is a top-level collection, leave it false.
 class CategorySelector extends StatefulWidget {
   final bool useCollectionGroup;
   const CategorySelector({super.key, this.useCollectionGroup = false});
@@ -80,7 +77,7 @@ class _CategorySelectorState extends State<CategorySelector> {
 
         const SizedBox(height: 10),
 
-        // === Product List for selected category ===
+        //Product List for selected category
         SizedBox(
           height: 210,
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -157,18 +154,6 @@ class _CategorySelectorState extends State<CategorySelector> {
           ),
         ),
       ],
-    );
-  }
-
-  // Simple placeholder shimmer
-  Widget _buildShimmerCard() {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(12),
-      ),
     );
   }
 }

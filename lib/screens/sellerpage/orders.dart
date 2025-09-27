@@ -46,10 +46,7 @@ class _OrderScreenState extends State<OrderScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _OrdersTab(),
-          _FavoritesTab(), // keep SpartaHelp here
-        ],
+        children: const [_OrdersTab(), _FavoritesTab()],
       ),
     );
   }
@@ -205,7 +202,7 @@ class _OrdersTabState extends State<_OrdersTab>
   }
 
   void _showOrderDetails(
-    String orderId, // 👈 add orderId
+    String orderId,
     String sellerName,
     List<Map<String, dynamic>> items,
     double subtotal,

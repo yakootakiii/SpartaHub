@@ -15,10 +15,10 @@ class SellerService {
     await sellerDoc.set({
       'fullName': fullName,
       'email': email,
-      'products': [], // Empty list initially
-      'activeOrders': [], // Empty list initially
-      'pastOrders': [], // Empty list initially
-      'earnings': 0.0, // Start at 0
+      'products': [],
+      'activeOrders': [],
+      'pastOrders': [],
+      'earnings': 0.0,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

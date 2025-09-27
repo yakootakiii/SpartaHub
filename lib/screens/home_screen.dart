@@ -1,4 +1,3 @@
-// ignore_for_file: sized_box_for_whitespace
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:spartahubdev/widgets/category_slider.dart';
@@ -6,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:spartahubdev/widgets/food_card.dart';
 import 'package:spartahubdev/widgets/restaurant_card.dart';
+import 'package:spartahubdev/widgets/shimmer_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,14 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshData() {
     if (_isDisposed) return;
-    setState(() {
-      // 👇 Just triggers a rebuild, no timers/randomizer loops
-    });
+    setState(() {});
   }
 
   Color hexToColor(String hex) {
     hex = hex.replaceAll('#', '');
-    if (hex.length == 6) hex = 'FF$hex'; // add opacity if not provided
+    if (hex.length == 6) hex = 'FF$hex';
     return Color(int.parse(hex, radix: 16));
   }
 
@@ -293,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       itemCount: 3,
                       itemBuilder: (context, index) {
-                        return _buildShimmerCard();
+                        return ShimmerCard();
                       },
                     ),
                   )
@@ -315,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               itemCount: 3,
                               itemBuilder: (context, index) {
-                                return _buildShimmerCard();
+                                return ShimmerCard();
                               },
                             ),
                           );
@@ -372,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: 3,
-                          itemBuilder: (context, index) => _buildShimmerCard(),
+                          itemBuilder: (context, index) => ShimmerCard(),
                         );
                       }
 
@@ -432,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: 3,
-                          itemBuilder: (context, index) => _buildShimmerCard(),
+                          itemBuilder: (context, index) => ShimmerCard(),
                         );
                       }
 
@@ -512,79 +510,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerCard() {
-    return Container(
-      width: 160,
-      margin: EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 16,
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  height: 12,
-                  width: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      height: 14,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                    ),
-                    Spacer(),
-                    Container(
-                      height: 12,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

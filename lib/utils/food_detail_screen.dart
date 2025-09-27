@@ -40,7 +40,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
         .collection('users')
         .doc(user.uid)
         .collection('favorites')
-        .doc(widget.foodName) // Use foodName as document ID
+        .doc(widget.foodName)
         .get();
 
     setState(() {
@@ -273,15 +273,13 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                       .collection('cart');
 
                   final cartItem = {
-                    'foodName': widget.foodName, // 👈 match orders
-                    'storeName': widget.restaurant, // 👈 match orders
+                    'foodName': widget.foodName,
+                    'storeName': widget.restaurant,
                     'price': widget.price,
                     'quantity': 1,
                     'createdAt': FieldValue.serverTimestamp(),
-                    'sellerId':
-                        widget.sellerId, // 👈 TODO: pass this into the widget
-                    'sellerName':
-                        widget.restaurant, // 👈 fallback if sellerName = store
+                    'sellerId': widget.sellerId,
+                    'sellerName': widget.restaurant,
                   };
 
                   // check if item already exists

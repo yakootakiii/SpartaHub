@@ -180,8 +180,7 @@ class OrderService {
 
                         await orderRef.set({
                           'buyerId': userId,
-                          'buyerName':
-                              buyerName, // ✅ now guaranteed to be correct
+                          'buyerName': buyerName,
                           'sellerId': items.first['sellerId'],
                           'sellerName': items.first['sellerName'],
                           'status': 'Processing',
