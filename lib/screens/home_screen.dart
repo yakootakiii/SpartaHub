@@ -1,11 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:spartahubdev/widgets/category_slider.dart';
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:spartahubdev/screens/search_screen.dart';
+import 'package:spartahubdev/widgets/category_slider.dart';
 import 'package:spartahubdev/widgets/food_card.dart';
 import 'package:spartahubdev/widgets/restaurant_card.dart';
 import 'package:spartahubdev/widgets/shimmer_card.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -231,7 +233,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   ElevatedButton(
                                     onPressed: () {
-                                      // TODO: Handle order action
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              SearchScreen(),
+                                        ),
+                                      );
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Color(0xFFCD0000),

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'main_screen.dart';
+import 'package:flutter/material.dart';
+
 import '../services/user_service.dart';
+import 'main_screen.dart';
 
 class AuthenticationScreen extends StatefulWidget {
   const AuthenticationScreen({super.key});
@@ -100,9 +101,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: forgot password logic
-                    },
+                    onPressed: _showForgotPasswordDialog,
                     child: const Text('Forgot Password?'),
                   ),
                 ),
@@ -163,6 +162,112 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     );
   }
 
+  // 🔑 Forgot Password Dialog (fully working Firebase logic)
+  void _showForgotPasswordDialog() {
+    final TextEditingController resetEmailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Reset Password',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Enter your email address and we\'ll send you a link to reset your password.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[400]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: Color(0xFFCD0000)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+
+              if (email.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your email')),
+                );
+                return;
+              }
+
+              try {
+                await _auth.sendPasswordResetEmail(email: email);
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Password reset email sent to $email'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } on FirebaseAuthException catch (e) {
+                String errorMessage;
+
+                switch (e.code) {
+                  case 'user-not-found':
+                    errorMessage = 'No user found with this email.';
+                    break;
+                  case 'invalid-email':
+                    errorMessage = 'Invalid email address.';
+                    break;
+                  default:
+                    errorMessage = 'An error occurred. Please try again.';
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(errorMessage)),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFCD0000),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Send Reset Link',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔹 Handle Sign In / Sign Up
   Future<void> _handleAuth() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -170,9 +275,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
     if (!_isLogin &&
         _passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Passwords do not match')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
       return;
     }
 
@@ -184,7 +289,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
           password: password,
         );
       } else {
-        // Create account
+        // 🆕 Create account
         final userCredential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
@@ -193,24 +298,23 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         final user = userCredential.user;
 
         if (user != null) {
-          // Save user profile using UserService
           await UserService.createUserProfile(user, fullName, email);
         }
       }
 
-      // Navigate to main screen
+      // ✅ Navigate to main screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => MainScreen()),
+        MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
     }
   }
 
-  /// Build text field widget
+  /// 🔹 Build reusable text field widget
   Widget _buildTextField(
     String label,
     IconData icon, {
