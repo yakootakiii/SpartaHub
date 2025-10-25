@@ -36,7 +36,7 @@ class OrderService {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Filter selected items if any were chosen
+            // Filter selected items
             final allDocs = snapshot.data!.docs;
             final cartDocs =
                 (selectedDocIds != null && selectedDocIds.isNotEmpty)
@@ -164,12 +164,7 @@ class OrderService {
                       onPressed: () async {
                         final userId = user.uid;
 
-                        final cartRef = FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userId)
-                            .collection('cart');
-
-                        // 🔹 Only fetch selected items for checkout
+                        // Only fetch selected items for checkout
                         final items = <Map<String, dynamic>>[];
                         double subtotal = 0;
 
