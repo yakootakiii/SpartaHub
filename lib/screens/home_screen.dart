@@ -8,7 +8,6 @@ import 'package:spartahubdev/widgets/food_card.dart';
 import 'package:spartahubdev/widgets/restaurant_card.dart';
 import 'package:spartahubdev/widgets/shimmer_card.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -236,8 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              SearchScreen(),
+                                          builder: (context) => SearchScreen(),
                                         ),
                                       );
                                     },

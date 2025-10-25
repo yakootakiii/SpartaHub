@@ -169,9 +169,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Reset Password',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -242,9 +240,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     errorMessage = 'An error occurred. Please try again.';
                 }
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(errorMessage)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(errorMessage)));
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error: ${e.toString()}')),
@@ -275,9 +273,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
     if (!_isLogin &&
         _passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
 
@@ -308,9 +306,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
   }
 

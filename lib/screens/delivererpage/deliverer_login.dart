@@ -1,17 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/seller_service.dart';
+import '../../services/deliverer_service.dart';
 import 'nav_bar.dart';
 
-class AuthenticationScreen extends StatefulWidget {
-  const AuthenticationScreen({super.key});
+class DeliverAuthenticationScreen extends StatefulWidget {
+  const DeliverAuthenticationScreen({super.key});
 
   @override
-  State<AuthenticationScreen> createState() => _AuthenticationScreenState();
+  State<DeliverAuthenticationScreen> createState() =>
+      _AuthenticationScreenState();
 }
 
-class _AuthenticationScreenState extends State<AuthenticationScreen> {
+class _AuthenticationScreenState extends State<DeliverAuthenticationScreen> {
   bool _isLogin = true;
 
   // Controllers
@@ -296,7 +297,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
         if (user != null) {
           // ✅ Create seller profile
-          await SellerService.createSellerProfile(user, fullName, email);
+          await DelivererService.createDelivererProfile(user, fullName, email);
         }
       }
 

@@ -6,11 +6,13 @@ import 'profile_pages/order_history_screen.dart';
 import 'profile_pages/settings_screen.dart';
 import 'profile_pages/help_support_screen.dart';
 import 'onboarding_screen.dart';
-import 'sellerpage/seller_login.dart';
 import 'profile_pages/delivery_addresses.dart';
 import 'profile_pages/payment_methods.dart';
 import 'profile_pages/notifications.dart';
 import 'profile_pages/about_app.dart';
+
+import 'sellerpage/seller_login.dart';
+import 'delivererpage/deliverer_login.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -187,8 +189,14 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     _buildProfileOption(
                       'Become a Deliverer',
-                      Icons.delivery_dining_outlined,
-                      () {},
+                      Icons.shopping_bag_outlined,
+                      () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DeliverAuthenticationScreen(),
+                        ),
+                      ),
                     ),
                     _buildProfileOption(
                       'Notifications',
