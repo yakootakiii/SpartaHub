@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+class DelivererOrderScreen extends StatefulWidget {
+  const DelivererOrderScreen({super.key});
 
   @override
-  State<OrderScreen> createState() => _OrderScreenState();
+  State<DelivererOrderScreen> createState() => _OrderScreenState();
 }
 
-class _OrderScreenState extends State<OrderScreen>
+class _OrderScreenState extends State<DelivererOrderScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
 

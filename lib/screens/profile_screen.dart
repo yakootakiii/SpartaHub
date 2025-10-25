@@ -188,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     _buildProfileOption(
-                      'Become a Deliverer',
+                      'Become a Courier',
                       Icons.shopping_bag_outlined,
                       () => Navigator.pushReplacement(
                         context,
