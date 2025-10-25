@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'deliverer_profile_pages/orders.dart';
-import 'deliverer_profile_pages/earnings.dart';
-import 'deliverer_profile_pages/settings_screen.dart';
-import 'deliverer_profile_pages/help_support_screen.dart';
+import 'courier_profile_pages/orders.dart';
+import 'courier_profile_pages/earnings.dart';
+import 'courier_profile_pages/settings_screen.dart';
+import 'courier_profile_pages/help_support_screen.dart';
 
 import '../onboarding_screen.dart';
 

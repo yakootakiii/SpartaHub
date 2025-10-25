@@ -1,6 +1,6 @@
-import 'package:spartahubdev/screens/delivererpage/deliverer_profile.dart';
+import 'package:spartahubdev/screens/courierpage/courier_profile.dart';
 import 'package:flutter/material.dart';
-import './orders.dart';
+import 'orders.dart';
 import '../notifications_screen.dart';
 // import 'home_screen.dart';
 // import 'search_screen.dart';

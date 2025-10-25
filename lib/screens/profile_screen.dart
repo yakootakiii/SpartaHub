@@ -12,7 +12,7 @@ import 'profile_pages/notifications.dart';
 import 'profile_pages/about_app.dart';
 
 import 'sellerpage/seller_login.dart';
-import 'delivererpage/deliverer_login.dart';
+import 'courierpage/courier_login.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
