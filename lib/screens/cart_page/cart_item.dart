@@ -6,6 +6,8 @@ class CartItem extends StatelessWidget {
   final String name, store, docId;
   final double price;
   final int quantity;
+  final bool isSelected;
+  final ValueChanged<bool?> onChanged;
 
   const CartItem({
     super.key,
@@ -14,6 +16,8 @@ class CartItem extends StatelessWidget {
     required this.price,
     required this.quantity,
     required this.docId,
+    required this.isSelected,
+    required this.onChanged,
   });
 
   @override
@@ -22,7 +26,7 @@ class CartItem extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -32,6 +36,13 @@ class CartItem extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Checkbox(
+            value: isSelected,
+            onChanged: onChanged,
+            activeColor: const Color(0xFFCD0000),
+          ),
+
+          // Product image
           Container(
             width: 60,
             height: 60,
@@ -41,7 +52,10 @@ class CartItem extends StatelessWidget {
             ),
             child: Icon(Icons.fastfood, color: Colors.grey[400]),
           ),
+
           const SizedBox(width: 12),
+
+          // Product info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +81,8 @@ class CartItem extends StatelessWidget {
               ],
             ),
           ),
+
+          // Quantity controls
           Row(
             children: [
               IconButton(

@@ -4,15 +4,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'cart_item.dart';
 import '../../services/order_service.dart';
 
-class CartTab extends StatelessWidget {
+class CartTab extends StatefulWidget {
   const CartTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  State<CartTab> createState() => _CartTabState();
+}
 
+class _CartTabState extends State<CartTab> {
+  final user = FirebaseAuth.instance.currentUser;
+  final Map<String, bool> _selectedItems = {}; // Track selected items
+
+  @override
+  Widget build(BuildContext context) {
     if (user == null) {
-      return Center(child: Text("Please log in to view your cart."));
+      return const Center(child: Text("Please log in to view your cart."));
     }
 
     return Column(
@@ -21,7 +27,7 @@ class CartTab extends StatelessWidget {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
-                .doc(user.uid)
+                .doc(user!.uid)
                 .collection('cart')
                 .orderBy('createdAt', descending: true)
                 .snapshots(),
@@ -36,17 +42,31 @@ class CartTab extends StatelessWidget {
 
               final docs = snapshot.data!.docs;
 
+              // Ensure map contains all items
+              for (var doc in docs) {
+                _selectedItems.putIfAbsent(doc.id, () => false);
+              }
+
               return ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
-                  final data = docs[index].data() as Map<String, dynamic>;
+                  final doc = docs[index];
+                  final data = doc.data() as Map<String, dynamic>;
+                  final isSelected = _selectedItems[doc.id] ?? false;
+
                   return CartItem(
                     name: data['foodName'] ?? 'Unnamed',
                     store: data['sellerName'] ?? 'Unknown Store',
                     price: (data['price'] ?? 0).toDouble(),
                     quantity: (data['quantity'] ?? 1) as int,
-                    docId: docs[index].id,
+                    docId: doc.id,
+                    isSelected: isSelected,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _selectedItems[doc.id] = value ?? false;
+                      });
+                    },
                   );
                 },
               );
@@ -56,16 +76,20 @@ class CartTab extends StatelessWidget {
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
-              .doc(user.uid)
+              .doc(user!.uid)
               .collection('cart')
               .snapshots(),
           builder: (context, snapshot) {
             double total = 0;
+
             if (snapshot.hasData) {
-              total = snapshot.data!.docs.fold(0, (sum, doc) {
+              for (var doc in snapshot.data!.docs) {
                 final data = doc.data() as Map<String, dynamic>;
-                return sum + (data['price'] ?? 0) * (data['quantity'] ?? 1);
-              });
+                final selected = _selectedItems[doc.id] ?? false;
+                if (selected) {
+                  total += (data['price'] ?? 0) * (data['quantity'] ?? 1);
+                }
+              }
             }
 
             return Container(
@@ -98,28 +122,84 @@ class CartTab extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        OrderService.showCheckoutDialog(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFCD0000),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: total > 0
+                                ? () {
+                                    // Pass only selected items to checkout
+                                    final selectedDocs = _selectedItems.entries
+                                        .where((entry) => entry.value)
+                                        .map((entry) => entry.key)
+                                        .toList();
+
+                                    if (selectedDocs.isEmpty) return;
+
+                                    OrderService.showCheckoutDialog(
+                                      context,
+                                      selectedDocs,
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFCD0000),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Checkout',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        'Proceed to Checkout',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: total > 0
+                                ? () {
+                                    // Pass only selected items to checkout
+                                    final selectedDocs = _selectedItems.entries
+                                        .where((entry) => entry.value)
+                                        .map((entry) => entry.key)
+                                        .toList();
+
+                                    if (selectedDocs.isEmpty) return;
+
+                                    OrderService.showCheckoutDialog(
+                                      context,
+                                      selectedDocs,
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange[700],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Donate',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

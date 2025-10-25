@@ -3,29 +3,53 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class OrderService {
-  static void showCheckoutDialog(BuildContext context) {
+  static void showCheckoutDialog(
+    BuildContext context, [
+    List<String>? selectedDocIds,
+  ]) {
     const double deliveryFee = 25.0;
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please log in first!')));
+      return;
+    }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       backgroundColor: Colors.white,
       builder: (context) {
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
+        return FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
               .collection('users')
-              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .doc(user.uid)
               .collection('cart')
-              .snapshots(),
+              .get(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
 
-            final cartDocs = snapshot.data!.docs;
+            // Filter selected items if any were chosen
+            final allDocs = snapshot.data!.docs;
+            final cartDocs =
+                (selectedDocIds != null && selectedDocIds.isNotEmpty)
+                ? allDocs
+                      .where((doc) => selectedDocIds.contains(doc.id))
+                      .toList()
+                : allDocs;
+
+            if (cartDocs.isEmpty) {
+              return const Center(
+                child: Text("No items selected for checkout."),
+              );
+            }
 
             // Calculate subtotal
             double subtotal = 0;
@@ -39,52 +63,60 @@ class OrderService {
             final total = subtotal + deliveryFee;
 
             return Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               height: MediaQuery.of(context).size.height * 0.7,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Checkout',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 20),
-                  Text('Delivery Address'),
+                  const SizedBox(height: 20),
+                  const Text('Delivery Address'),
                   Container(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.location_on),
-                        SizedBox(width: 8),
-                        Expanded(child: Text('BSU Main Campus, Batangas City')),
-                        TextButton(onPressed: () {}, child: Text('Change')),
+                        const Icon(Icons.location_on),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text('BSU Main Campus, Batangas City'),
+                        ),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Change'),
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Text('Payment Method'),
+                  const SizedBox(height: 20),
+                  const Text('Payment Method'),
                   Container(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.payment),
-                        SizedBox(width: 8),
-                        Expanded(child: Text('Cash on Delivery')),
-                        TextButton(onPressed: () {}, child: Text('Change')),
+                        const Icon(Icons.payment),
+                        const SizedBox(width: 8),
+                        const Expanded(child: Text('Cash on Delivery')),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Change'),
+                        ),
                       ],
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Container(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
@@ -93,42 +125,43 @@ class OrderService {
                       children: [
                         Row(
                           children: [
-                            Text('Subtotal'),
-                            Spacer(),
+                            const Text('Subtotal'),
+                            const Spacer(),
                             Text('₱${subtotal.toStringAsFixed(2)}'),
                           ],
                         ),
                         Row(
                           children: [
-                            Text('Delivery Fee'),
-                            Spacer(),
+                            const Text('Delivery Fee'),
+                            const Spacer(),
                             Text('₱${deliveryFee.toStringAsFixed(2)}'),
                           ],
                         ),
-                        Divider(),
+                        const Divider(),
                         Row(
                           children: [
-                            Text(
+                            const Text(
                               'Total',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             Text(
                               '₱${total.toStringAsFixed(2)}',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () async {
-                        final user = FirebaseAuth.instance.currentUser!;
                         final userId = user.uid;
 
                         final cartRef = FirebaseFirestore.instance
@@ -136,31 +169,12 @@ class OrderService {
                             .doc(userId)
                             .collection('cart');
 
-                        final cartSnapshot = await cartRef.get();
-
-                        if (cartSnapshot.docs.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Your cart is empty!'),
-                            ),
-                          );
-                          return;
-                        }
-
-                        // 🔹 Fetch buyer name from Firestore profile
-                        final userDoc = await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userId)
-                            .get();
-                        final buyerName =
-                            userDoc.data()?['fullName'] ?? 'Unnamed User';
-
-                        // Collect items from cart
-                        List<Map<String, dynamic>> items = [];
+                        // 🔹 Only fetch selected items for checkout
+                        final items = <Map<String, dynamic>>[];
                         double subtotal = 0;
 
-                        for (var doc in cartSnapshot.docs) {
-                          final data = doc.data();
+                        for (var doc in cartDocs) {
+                          final data = doc.data() as Map<String, dynamic>;
                           items.add({
                             'foodName': data['foodName'] ?? 'Unnamed item',
                             'quantity': data['quantity'] ?? 1,
@@ -173,7 +187,15 @@ class OrderService {
                               (data['price'] ?? 0) * (data['quantity'] ?? 1);
                         }
 
-                        // Create an order in Firestore
+                        // Fetch buyer name
+                        final userDoc = await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(userId)
+                            .get();
+                        final buyerName =
+                            userDoc.data()?['fullName'] ?? 'Unnamed User';
+
+                        // Create order in Firestore
                         final orderRef = FirebaseFirestore.instance
                             .collection('orders')
                             .doc();
@@ -187,24 +209,18 @@ class OrderService {
                           'createdAt': FieldValue.serverTimestamp(),
                           'items': items,
                           'subtotal': subtotal,
-                          'deliveryFee': 25.0,
-                          'total': subtotal + 25.0,
+                          'deliveryFee': deliveryFee,
+                          'total': subtotal + deliveryFee,
                           'deliveryAddress': 'CICS Building, Room 106',
                         });
 
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userId)
-                            .update({'ordersCount': FieldValue.increment(1)});
-
-                        // Clear cart
+                        // Clear selected items from cart
                         WriteBatch batch = FirebaseFirestore.instance.batch();
-                        for (var doc in cartSnapshot.docs) {
+                        for (var doc in cartDocs) {
                           batch.delete(doc.reference);
                         }
                         await batch.commit();
 
-                        // Snackbar
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Order placed successfully!'),
@@ -213,14 +229,13 @@ class OrderService {
 
                         Navigator.pop(context);
                       },
-
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFCD0000),
+                        backgroundColor: const Color(0xFFCD0000),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Place Order',
                         style: TextStyle(
                           fontSize: 16,
