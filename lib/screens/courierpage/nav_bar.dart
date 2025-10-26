@@ -1,11 +1,11 @@
 import 'package:spartahubdev/screens/courierpage/courier_profile.dart';
 import 'package:flutter/material.dart';
 import 'orders.dart';
-import '../notifications_screen.dart';
+// import '../notifications_screen.dart';
 // import 'home_screen.dart';
 // import 'search_screen.dart';
 // import 'cart_screen.dart';
-// import 'notifications_screen.dart';
+import 'courier_notification.dart';
 // import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,8 +19,8 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    DelivererOrderScreen(),
-    NotificationsScreen(),
+    CourierOrderScreen(),
+    CourierNotificationsScreen(),
     CourierProfileScreen(),
   ];
 

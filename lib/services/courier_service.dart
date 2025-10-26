@@ -1,18 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class DelivererService {
+class CourierService {
   /// Creates a deliverer profile in Firestore
-  static Future<void> createDelivererProfile(
+  static Future<void> createCourierProfile(
     User user,
     String fullName,
     String email,
   ) async {
-    final delivererDoc = FirebaseFirestore.instance
-        .collection('deliverers')
+    final courierDoc = FirebaseFirestore.instance
+        .collection('couriers')
         .doc(user.uid);
 
-    await delivererDoc.set({
+    await courierDoc.set({
       'fullName': fullName,
       'email': email,
       'activeDeliveries': [],

@@ -16,7 +16,8 @@ class _OrderScreenState extends State<OrderScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this); // 2 tabs only
+    // ✅ Fix: There are 3 tabs
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -35,18 +36,19 @@ class _OrderScreenState extends State<OrderScreen>
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Color(0xFFCD0000),
+          labelColor: const Color(0xFFCD0000),
           unselectedLabelColor: Colors.grey[600],
-          indicatorColor: Color(0xFFCD0000),
+          indicatorColor: const Color(0xFFCD0000),
           tabs: const [
-            Tab(text: 'Regular Orders'),
+            Tab(text: 'Orders'),
+            Tab(text: 'Accepted'),
             Tab(text: 'SpartaHelp'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [_OrdersTab(), _FavoritesTab()],
+        children: const [_OrdersTab(), _AcceptedTab(), _SpartaHelpTab()],
       ),
     );
   }
@@ -67,13 +69,16 @@ class _OrdersTabState extends State<_OrdersTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
           .where('sellerId', isEqualTo: userId)
+          .where(
+            'acceptedBySeller',
+            isEqualTo: false,
+          ) // 🔹 Only unaccepted orders
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -86,114 +91,76 @@ class _OrdersTabState extends State<_OrdersTab>
 
         final orders = snapshot.data!.docs;
 
-        // Group orders by sellerId (from first item in each order)
-        final Map<String, List<QueryDocumentSnapshot>> groupedOrders = {};
-        for (var doc in orders) {
-          final data = doc.data() as Map<String, dynamic>;
-          final items = List<Map<String, dynamic>>.from(data['items'] ?? []);
-          if (items.isEmpty) continue;
-
-          final sellerId = items.first['sellerId'] ?? 'unknown';
-          if (!groupedOrders.containsKey(sellerId)) {
-            groupedOrders[sellerId] = [];
-          }
-          groupedOrders[sellerId]!.add(doc);
-        }
-
-        final groupedList = groupedOrders.entries.toList();
-
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: groupedList.length,
+          itemCount: orders.length,
           itemBuilder: (context, index) {
-            // final sellerId = groupedList[index].key;
-            final sellerOrders = groupedList[index].value;
+            final orderDoc = orders[index];
+            final orderData = orderDoc.data() as Map<String, dynamic>;
+            final orderTitle = orderDoc.id.substring(0, 6);
 
-            // Use sellerName from first item of first order
-            final sellerName =
-                (sellerOrders.first.data()
-                    as Map<String, dynamic>)['items'][0]['sellerName'] ??
-                'Unknown Seller';
+            final items = List<Map<String, dynamic>>.from(
+              orderData['items'] ?? [],
+            );
+            final subtotal = items.fold<double>(
+              0,
+              (sum, item) =>
+                  sum + ((item['price'] ?? 0) * (item['quantity'] ?? 1)),
+            );
+            final deliveryFee = orderData['deliveryFee'] ?? 25;
+            final total = subtotal + deliveryFee;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  sellerName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+            return GestureDetector(
+              onTap: () {
+                _showOrderDetails(
+                  orderDoc.id,
+                  orderData['buyerName'] ?? 'Unknown Buyer',
+                  orderData['deliveryAddress'] ?? 'No address provided',
+                  items,
+                  subtotal,
+                  deliveryFee,
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 5,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                ...sellerOrders.map((orderDoc) {
-                  final orderData = orderDoc.data() as Map<String, dynamic>;
-                  final orderTitle = orderDoc.id.substring(0, 6);
-                  final items = List<Map<String, dynamic>>.from(
-                    orderData['items'] ?? [],
-                  );
-                  final subtotal = items.fold<double>(
-                    0,
-                    (sum, item) =>
-                        sum + ((item['price'] ?? 0) * (item['quantity'] ?? 1)),
-                  );
-                  final deliveryFee = orderData['deliveryFee'] ?? 25;
-                  final total = subtotal + deliveryFee;
-
-                  return GestureDetector(
-                    onTap: () {
-                      _showOrderDetails(
-                        orderDoc.id,
-                        sellerName,
-                        items,
-                        subtotal,
-                        deliveryFee,
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.receipt_long,
-                            color: Color(0xFFCD0000),
-                            size: 40,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Order #$orderTitle',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '₱${total.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long,
+                      color: Color(0xFFCD0000),
+                      size: 40,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Order #$orderTitle',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  );
-                }),
-                const SizedBox(height: 16),
-              ],
+                    Text(
+                      '₱${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         );
@@ -203,7 +170,8 @@ class _OrdersTabState extends State<_OrdersTab>
 
   void _showOrderDetails(
     String orderId,
-    String sellerName,
+    String buyerName,
+    String deliveryAddress,
     List<Map<String, dynamic>> items,
     double subtotal,
     double deliveryFee,
@@ -234,7 +202,228 @@ class _OrdersTabState extends State<_OrdersTab>
                   ),
                 ),
               ),
-              // 🔹 Title shows the order number instead of seller name
+              Text(
+                'Order #${orderId.substring(0, 6)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Buyer: $buyerName'),
+              Text('Delivery Address: $deliveryAddress'),
+              const SizedBox(height: 16),
+
+              // 🔹 Items
+              ...items.map(
+                (item) => ListTile(
+                  title: Text(item['foodName'] ?? 'Unnamed'),
+                  subtitle: Text('x${item['quantity'] ?? 1}'),
+                  trailing: Text(
+                    '₱${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+              const Divider(),
+              Row(
+                children: [
+                  const Text(
+                    'Subtotal:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Text('₱${subtotal.toStringAsFixed(2)}'),
+                ],
+              ),
+              Row(
+                children: [
+                  const Text('Delivery Fee:'),
+                  const Spacer(),
+                  Text('₱${deliveryFee.toStringAsFixed(2)}'),
+                ],
+              ),
+              const Divider(),
+              Row(
+                children: [
+                  const Text(
+                    'Total:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.green,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '₱${total.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection('orders')
+                      .doc(orderId)
+                      .update({'status': 'Accepted', 'acceptedBySeller': true});
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order marked as Accepted')),
+                  );
+                },
+                child: const Text(
+                  'Accept Order',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AcceptedTab extends StatelessWidget {
+  const _AcceptedTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('sellerId', isEqualTo: userId)
+          .where('acceptedBySeller', isEqualTo: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No accepted orders yet.'));
+        }
+
+        final orders = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final orderDoc = orders[index];
+            final order = orderDoc.data() as Map<String, dynamic>;
+            final orderTitle = orderDoc.id.substring(0, 6);
+            final total = order['total'] ?? 0;
+            final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
+            final deliveryFee = order['deliveryFee'] ?? 25;
+            final subtotal = order['subtotal'] ?? 0;
+
+            return GestureDetector(
+              onTap: () => _showOrderDetails(
+                context,
+                orderDoc.id,
+                items,
+                subtotal,
+                deliveryFee,
+              ),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Order #$orderTitle',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '₱${(total as num).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showOrderDetails(
+    BuildContext context,
+    String orderId,
+    List<Map<String, dynamic>> items,
+    double subtotal,
+    double deliveryFee,
+  ) {
+    double total = subtotal + deliveryFee;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
               Text(
                 'Order #${orderId.substring(0, 6)}',
                 style: const TextStyle(
@@ -303,10 +492,10 @@ class _OrdersTabState extends State<_OrdersTab>
               ),
               const SizedBox(height: 20),
 
-              // 🔹 Accept Order button
+              // Ready for Pick-up button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.orange,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -316,15 +505,16 @@ class _OrdersTabState extends State<_OrdersTab>
                   await FirebaseFirestore.instance
                       .collection('orders')
                       .doc(orderId)
-                      .update({'status': 'Accepted'});
-
-                  Navigator.pop(context); // close sheet
+                      .update({'status': 'Ready for Pick-up'});
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order marked as Accepted')),
+                    const SnackBar(
+                      content: Text('Order marked as Ready for Pick-up'),
+                    ),
                   );
                 },
                 child: const Text(
-                  'Accept Order',
+                  'Ready for Pick-up',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -340,85 +530,11 @@ class _OrdersTabState extends State<_OrdersTab>
   }
 }
 
-class _FavoritesTab extends StatefulWidget {
-  const _FavoritesTab();
-
-  @override
-  State<_FavoritesTab> createState() => _FavoritesTabState();
-}
-
-class _FavoritesTabState extends State<_FavoritesTab>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
+class _SpartaHelpTab extends StatelessWidget {
+  const _SpartaHelpTab();
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    // Using SpartaHelp as original "Favorites"
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        _buildFavoriteItem('Chicken Sisig', 'Grill Master', 120.0),
-        _buildFavoriteItem('Lumpia Shanghai', 'Home Cooked', 80.0),
-        _buildFavoriteItem('Buko Pie', 'Sweet Treats', 150.0),
-      ],
-    );
-  }
-
-  Widget _buildFavoriteItem(String name, String store, double price) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.fastfood, color: Colors.grey[400]),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  store,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '₱${price.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Spacer(),
-                    SizedBox(width: 4),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return const Center(child: Text('SpartaHelp content coming soon'));
   }
 }

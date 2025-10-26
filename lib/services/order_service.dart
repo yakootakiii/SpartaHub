@@ -195,11 +195,30 @@ class OrderService {
                             .collection('orders')
                             .doc();
 
+                        // await orderRef.set({
+                        //   'buyerId': userId,
+                        //   'buyerName': buyerName,
+                        //   'sellerId': items.first['sellerId'],
+                        //   'sellerName': items.first['sellerName'],
+                        //   'courierId': ' ',
+                        //   'courierName': ' ',
+                        //   'status': 'Processing',
+                        //   'createdAt': FieldValue.serverTimestamp(),
+                        //   'items': items,
+                        //   'subtotal': subtotal,
+                        //   'deliveryFee': deliveryFee,
+                        //   'total': subtotal + deliveryFee,
+                        //   'deliveryAddress': 'CICS Building, Room 106',
+                        // });
+
                         await orderRef.set({
                           'buyerId': userId,
                           'buyerName': buyerName,
                           'sellerId': items.first['sellerId'],
                           'sellerName': items.first['sellerName'],
+                          'courierId': null,
+                          'courierName': null,
+                          'acceptedBySeller': false,
                           'status': 'Processing',
                           'createdAt': FieldValue.serverTimestamp(),
                           'items': items,
@@ -207,7 +226,7 @@ class OrderService {
                           'deliveryFee': deliveryFee,
                           'total': subtotal + deliveryFee,
                           'deliveryAddress': 'CICS Building, Room 106',
-                        });
+                        }, SetOptions(merge: true));
 
                         // Clear selected items from cart
                         WriteBatch batch = FirebaseFirestore.instance.batch();

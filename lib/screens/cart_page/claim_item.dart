@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class SavedItem extends StatelessWidget {
+class ClaimItem extends StatelessWidget {
   final String title, description;
 
-  const SavedItem({super.key, required this.title, required this.description});
+  const ClaimItem({super.key, required this.title, required this.description});
 
   @override
   Widget build(BuildContext context) {

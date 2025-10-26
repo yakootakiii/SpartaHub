@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/deliverer_service.dart';
+import '../../services/courier_service.dart';
 import 'nav_bar.dart';
 
 class DeliverAuthenticationScreen extends StatefulWidget {
@@ -296,12 +296,12 @@ class _AuthenticationScreenState extends State<DeliverAuthenticationScreen> {
         final user = userCredential.user;
 
         if (user != null) {
-          // ✅ Create seller profile
-          await DelivererService.createDelivererProfile(user, fullName, email);
+          // Create courier profile
+          await CourierService.createCourierProfile(user, fullName, email);
         }
       }
 
-      // ✅ Navigate to main screen
+      // Navigate to main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),

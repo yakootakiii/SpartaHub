@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cart_page/cart_tab.dart';
 import 'cart_page/favorites_tab.dart';
-import 'cart_page/saved_tab.dart';
+import 'cart_page/claim_tab.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -41,13 +41,13 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
           tabs: [
             Tab(text: 'Cart'),
             Tab(text: 'Favorites'),
-            Tab(text: 'Saved'),
+            Tab(text: 'Claim'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [CartTab(), FavoritesTab(), SavedTab()],
+        children: const [CartTab(), FavoritesTab(), ClaimTab()],
       ),
     );
   }

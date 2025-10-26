@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class DelivererOrderScreen extends StatefulWidget {
-  const DelivererOrderScreen({super.key});
+class CourierOrderScreen extends StatefulWidget {
+  const CourierOrderScreen({super.key});
 
   @override
-  State<DelivererOrderScreen> createState() => _OrderScreenState();
+  State<CourierOrderScreen> createState() => _OrderScreenState();
 }
 
-class _OrderScreenState extends State<DelivererOrderScreen>
+class _OrderScreenState extends State<CourierOrderScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
@@ -39,14 +39,14 @@ class _OrderScreenState extends State<DelivererOrderScreen>
           unselectedLabelColor: Colors.grey[600],
           indicatorColor: Color(0xFFCD0000),
           tabs: const [
-            Tab(text: 'Regular Orders'),
-            Tab(text: 'SpartaHelp'),
+            Tab(text: 'Available Orders'),
+            Tab(text: 'Accepted Orders'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [_OrdersTab(), _FavoritesTab()],
+        children: const [_OrdersTab(), _AcceptedOrdersTab()],
       ),
     );
   }
@@ -68,12 +68,11 @@ class _OrdersTabState extends State<_OrdersTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('orders')
-          .where('sellerId', isEqualTo: userId)
+          .where('courierId', isNull: true) // Only show orders with no courier
+          .where('acceptedBySeller', isEqualTo: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -81,7 +80,7 @@ class _OrdersTabState extends State<_OrdersTab>
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No orders yet.'));
+          return const Center(child: Text('No available orders.'));
         }
 
         final orders = snapshot.data!.docs;
@@ -148,6 +147,8 @@ class _OrdersTabState extends State<_OrdersTab>
                         items,
                         subtotal,
                         deliveryFee,
+                        orderData['buyerName'] ?? 'Unknown Buyer',
+                        orderData['deliveryAddress'] ?? 'No address provided',
                       );
                     },
                     child: Container(
@@ -207,6 +208,8 @@ class _OrdersTabState extends State<_OrdersTab>
     List<Map<String, dynamic>> items,
     double subtotal,
     double deliveryFee,
+    String buyerName,
+    String deliveryAddress,
   ) {
     double total = subtotal + deliveryFee;
 
@@ -242,6 +245,9 @@ class _OrdersTabState extends State<_OrdersTab>
                   fontSize: 20,
                 ),
               ),
+              const SizedBox(height: 16),
+              Text('Buyer: $buyerName'),
+              Text('Delivery Address: $deliveryAddress'),
               const SizedBox(height: 16),
 
               // Items list
@@ -303,7 +309,7 @@ class _OrdersTabState extends State<_OrdersTab>
               ),
               const SizedBox(height: 20),
 
-              // 🔹 Accept Order button
+              // Accept Order button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -313,14 +319,23 @@ class _OrdersTabState extends State<_OrdersTab>
                   ),
                 ),
                 onPressed: () async {
+                  final user = FirebaseAuth.instance.currentUser!;
+                  final courierId = user.uid;
+                  final courierName = user.displayName ?? 'Courier';
+
                   await FirebaseFirestore.instance
                       .collection('orders')
                       .doc(orderId)
-                      .update({'status': 'Accepted'});
+                      .update({
+                        'courierId': courierId,
+                        'courierName': courierName,
+                      });
 
                   Navigator.pop(context); // close sheet
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order marked as Accepted')),
+                    const SnackBar(
+                      content: Text('You have accepted this delivery.'),
+                    ),
                   );
                 },
                 child: const Text(
@@ -340,14 +355,14 @@ class _OrdersTabState extends State<_OrdersTab>
   }
 }
 
-class _FavoritesTab extends StatefulWidget {
-  const _FavoritesTab();
+class _AcceptedOrdersTab extends StatefulWidget {
+  const _AcceptedOrdersTab();
 
   @override
-  State<_FavoritesTab> createState() => _FavoritesTabState();
+  State<_AcceptedOrdersTab> createState() => _AcceptedOrdersTabState();
 }
 
-class _FavoritesTabState extends State<_FavoritesTab>
+class _AcceptedOrdersTabState extends State<_AcceptedOrdersTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
@@ -355,70 +370,252 @@ class _FavoritesTabState extends State<_FavoritesTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // Using SpartaHelp as original "Favorites"
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        _buildFavoriteItem('Chicken Sisig', 'Grill Master', 120.0),
-        _buildFavoriteItem('Lumpia Shanghai', 'Home Cooked', 80.0),
-        _buildFavoriteItem('Buko Pie', 'Sweet Treats', 150.0),
-      ],
+
+    final courierId = FirebaseAuth.instance.currentUser!.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .where('courierId', isEqualTo: courierId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        // Loading indicator
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Empty state
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No accepted deliveries yet.'));
+        }
+
+        final orders = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          itemBuilder: (context, index) {
+            final orderDoc = orders[index];
+            final orderData = orderDoc.data() as Map<String, dynamic>;
+
+            final orderTitle = orderDoc.id.substring(0, 6);
+            final buyerName = orderData['buyerName'] ?? 'Unknown Buyer';
+            final deliveryAddress =
+                orderData['deliveryAddress'] ?? 'No address provided';
+            final total = (orderData['total'] ?? 0).toDouble();
+            final status = orderData['status'] ?? 'Processing';
+
+            return GestureDetector(
+              onTap: () => _showOrderDetails(
+                orderId: orderDoc.id,
+                buyerName: buyerName,
+                deliveryAddress: deliveryAddress,
+                total: total,
+                status: status,
+              ),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.local_shipping,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Order #$orderTitle',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            buyerName,
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            status,
+                            style: TextStyle(
+                              color: Colors.blueGrey,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '₱${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildFavoriteItem(String name, String store, double price) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5),
-        ],
+  void _showOrderDetails({
+    required String orderId,
+    required String buyerName,
+    required String deliveryAddress,
+    required double total,
+    required String status,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.fastfood, color: Colors.grey[400]),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  store,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '₱${price.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
+      builder: (context) {
+        String currentStatus = status;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            String buttonText;
+            Color buttonColor;
+
+            if (currentStatus == 'Ready for Pick-up') {
+              buttonText = 'Picked Up';
+              buttonColor = Colors.orange;
+            } else if (currentStatus == 'Picked Up') {
+              buttonText = 'Mark as Delivered';
+              buttonColor = Colors.blue;
+            } else {
+              // Hide button if already delivered
+              buttonText = '';
+              buttonColor = Colors.grey;
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    Spacer(),
-                    SizedBox(width: 4),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                  ),
+                  Text(
+                    'Order #${orderId.substring(0, 6)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Buyer: $buyerName'),
+                  Text('Delivery Address: $deliveryAddress'),
+                  const Divider(height: 30),
+                  Row(
+                    children: [
+                      const Text(
+                        'Total:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.green,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '₱${total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Only show button if not yet delivered
+                  if (currentStatus != 'Delivered')
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        String newStatus;
+
+                        if (currentStatus == 'Ready for Pick-up') {
+                          newStatus = 'Picked Up';
+                        } else if (currentStatus == 'Picked Up') {
+                          newStatus = 'Delivered';
+                        } else {
+                          return;
+                        }
+
+                        await FirebaseFirestore.instance
+                            .collection('orders')
+                            .doc(orderId)
+                            .update({'status': newStatus});
+
+                        setModalState(() {
+                          currentStatus = newStatus;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Order marked as $newStatus')),
+                        );
+
+                        if (newStatus == 'Delivered') {
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Text(
+                        buttonText,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
