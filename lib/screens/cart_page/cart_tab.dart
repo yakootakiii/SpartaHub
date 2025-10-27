@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'cart_item.dart';
 import '../../services/order_service.dart';
+import '../../services/donation_service.dart';
 
 class CartTab extends StatefulWidget {
   const CartTab({super.key});
@@ -168,17 +169,13 @@ class _CartTabState extends State<CartTab> {
                           child: ElevatedButton(
                             onPressed: total > 0
                                 ? () {
-                                    // Pass only selected items to checkout
-                                    final selectedDocs = _selectedItems.entries
+                                    final selectedItems = _selectedItems.entries
                                         .where((entry) => entry.value)
                                         .map((entry) => entry.key)
                                         .toList();
-
-                                    if (selectedDocs.isEmpty) return;
-
-                                    OrderService.showCheckoutDialog(
+                                    DonationService.showDonationDialog(
                                       context,
-                                      selectedDocs,
+                                      selectedItems,
                                     );
                                   }
                                 : null,
