@@ -10,39 +10,53 @@ import 'screens/main_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  final prefs = await SharedPreferences.getInstance();
-  final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-  final currentUser = FirebaseAuth.instance.currentUser;
-
-  runApp(
-    SpartaHubApp(
-      hasSeenOnboarding: hasSeenOnboarding,
-      isLoggedIn: currentUser != null,
-    ),
-  );
+  runApp(const SpartaHubApp());
 }
 
-class SpartaHubApp extends StatelessWidget {
-  final bool hasSeenOnboarding;
-  final bool isLoggedIn;
+class SpartaHubApp extends StatefulWidget {
+  const SpartaHubApp({super.key});
 
-  const SpartaHubApp({
-    super.key,
-    this.hasSeenOnboarding = false,
-    this.isLoggedIn = false,
-  });
+  @override
+  State<SpartaHubApp> createState() => _SpartaHubAppState();
+}
+
+class _SpartaHubAppState extends State<SpartaHubApp> {
+  bool? _hasSeenOnboarding;
+  User? _currentUser;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStartupState();
+  }
+
+  Future<void> _loadStartupState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeen = prefs.getBool('has_seen_onboarding') ?? false;
+    final user = FirebaseAuth.instance.currentUser;
+
+    setState(() {
+      _hasSeenOnboarding = hasSeen;
+      _currentUser = user;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    Widget startScreen;
+    if (_isLoading) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
 
-    // ✅ Decide which screen to show first
-    if (!hasSeenOnboarding) {
+    Widget startScreen;
+    if (!_hasSeenOnboarding!) {
       startScreen = const OnboardingScreen();
-    } else if (isLoggedIn) {
+    } else if (_currentUser != null) {
       startScreen = const MainScreen();
     } else {
       startScreen = const AuthenticationScreen();

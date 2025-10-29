@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/seller_service.dart';
 import 'nav_bar.dart';
@@ -293,11 +294,16 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
         );
 
         final user = userCredential.user;
-
         if (user != null) {
           await SellerService.createSellerProfile(user, fullName, email);
         }
       }
+
+      // ✅ Save seller login state
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isSeller', true);
+
+      // ✅ Navigate to seller main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
