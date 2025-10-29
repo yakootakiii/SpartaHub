@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/onboarding_data.dart';
 import '../widgets/onboarding_page.dart';
 import 'authentication_screen.dart';
@@ -78,28 +80,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             SizedBox(height: 40),
             // Action Buttons
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('has_seen_onboarding', true);
+
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AuthenticationScreen(),
+                            builder: (context) => const AuthenticationScreen(),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFCD0000),
+                        backgroundColor: const Color(0xFFCD0000),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Get Started',
                         style: TextStyle(
                           fontSize: 16,
@@ -112,6 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
             ),
+
             SizedBox(height: 24),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/user_service.dart';
 import 'main_screen.dart';
@@ -13,6 +14,7 @@ class AuthenticationScreen extends StatefulWidget {
 
 class _AuthenticationScreenState extends State<AuthenticationScreen> {
   bool _isLogin = true;
+  bool _rememberMe = false;
 
   // Controllers
   final TextEditingController _emailController = TextEditingController();
@@ -27,6 +29,20 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
+    _checkRememberedUser();
+  }
+
+  Future<void> _checkRememberedUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (rememberMe && _auth.currentUser != null) {
+      // User previously logged in and chose "remember me"
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    }
   }
 
   @override
@@ -97,13 +113,29 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
               ],
 
               if (_isLogin) ...[
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _showForgotPasswordDialog,
-                    child: const Text('Forgot Password?'),
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value!;
+                            });
+                          },
+                          activeColor: const Color(0xFFCD0000),
+                        ),
+                        const Text("Remember Me"),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: _showForgotPasswordDialog,
+                      child: const Text('Forgot Password?'),
+                    ),
+                  ],
                 ),
               ],
 
@@ -162,10 +194,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     );
   }
 
-  // 🔑 Forgot Password Dialog (fully working Firebase logic)
+  // Forgot Password Dialog (same as before)
   void _showForgotPasswordDialog() {
     final TextEditingController resetEmailController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -208,18 +239,15 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
           ElevatedButton(
             onPressed: () async {
               final email = resetEmailController.text.trim();
-
               if (email.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please enter your email')),
                 );
                 return;
               }
-
               try {
                 await _auth.sendPasswordResetEmail(email: email);
                 Navigator.pop(context);
-
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Password reset email sent to $email'),
@@ -228,7 +256,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                 );
               } on FirebaseAuthException catch (e) {
                 String errorMessage;
-
                 switch (e.code) {
                   case 'user-not-found':
                     errorMessage = 'No user found with this email.';
@@ -239,7 +266,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                   default:
                     errorMessage = 'An error occurred. Please try again.';
                 }
-
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(SnackBar(content: Text(errorMessage)));
@@ -265,7 +291,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     );
   }
 
-  // 🔹 Handle Sign In / Sign Up
   Future<void> _handleAuth() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -286,6 +311,10 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
           email: email,
           password: password,
         );
+
+        // Save Remember Me state
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('remember_me', _rememberMe);
       } else {
         // 🆕 Create account
         final userCredential = await _auth.createUserWithEmailAndPassword(
@@ -294,13 +323,16 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         );
 
         final user = userCredential.user;
-
         if (user != null) {
           await UserService.createUserProfile(user, fullName, email);
         }
+
+        // Default: not remembering new signups
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('remember_me', false);
       }
 
-      // ✅ Navigate to main screen
+      // Navigate to main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -312,7 +344,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     }
   }
 
-  /// 🔹 Build reusable text field widget
   Widget _buildTextField(
     String label,
     IconData icon, {

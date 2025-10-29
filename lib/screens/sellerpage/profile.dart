@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spartahubdev/screens/home_screen.dart';
 
 import 'seller_profile_pages/products.dart';
 import 'seller_profile_pages/orders.dart';
 import 'seller_profile_pages/earnings.dart';
 import 'seller_profile_pages/settings_screen.dart';
 import 'seller_profile_pages/help_support_screen.dart';
-
-import '../onboarding_screen.dart';
+import '../authentication_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -208,12 +209,21 @@ class ProfileScreen extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    _buildProfileOption('Sign Out', Icons.logout, () {
-                      Navigator.pushReplacement(
+                    _buildProfileOption('Sign Out', Icons.logout, () async {
+                      final prefs = await SharedPreferences.getInstance();
+
+                      await FirebaseAuth.instance.signOut();
+
+                      await prefs.setBool('isLoggedIn', true);
+                      await prefs.setBool('rememberMe', true);
+
+                      // Navigate back to user login screen
+                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const OnboardingScreen(),
+                          builder: (context) => const AuthenticationScreen(),
                         ),
+                        (route) => false,
                       );
                     }, isDestructive: true),
                   ],

@@ -1,15 +1,20 @@
+// Flutter & Packages
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+// Core Screens
+import 'authentication_screen.dart'; // ✅ add this if you're navigating to login
+
+// Profile Pages
+import 'profile_pages/about_app.dart';
 import 'profile_pages/order_history_screen.dart';
 import 'profile_pages/settings_screen.dart';
 import 'profile_pages/help_support_screen.dart';
-import 'onboarding_screen.dart';
 import 'profile_pages/delivery_addresses.dart';
 import 'profile_pages/payment_methods.dart';
 import 'profile_pages/notifications.dart';
-import 'profile_pages/about_app.dart';
 
 import 'sellerpage/seller_login.dart';
 import 'courierpage/courier_login.dart';
@@ -34,6 +39,19 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      Future.microtask(() {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthenticationScreen()),
+          (route) => false,
+        );
+      });
+      return const SizedBox.shrink();
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -113,22 +131,23 @@ class ProfileScreen extends StatelessWidget {
                     StreamBuilder<DocumentSnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .doc(user.uid)
                           .snapshots(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
+                        if (!snapshot.hasData || !snapshot.data!.exists) {
                           return const CircularProgressIndicator(
                             color: Colors.white,
                           );
                         }
 
-                        final userDoc = snapshot.data!;
-                        final orders = userDoc['ordersCount'] ?? 0;
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>? ??
+                            {};
+                        final orders = data['ordersCount'] ?? 0;
                         final saved =
-                            (userDoc['saved'] as List<dynamic>?)?.length ?? 0;
-                        final points = userDoc['points'] ?? 0;
+                            (data['saved'] as List<dynamic>?)?.length ?? 0;
+                        final points = data['points'] ?? 0;
 
-                        // Format points with commas
                         final pointsFormatted = points
                             .toString()
                             .replaceAllMapped(
@@ -244,7 +263,8 @@ class ProfileScreen extends StatelessWidget {
                       () => Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AuthenticationScreen(),
+                          builder: (context) =>
+                              const SellerAuthenticationScreen(),
                         ),
                       ),
                     ),
@@ -335,12 +355,19 @@ class ProfileScreen extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
+
+                await FirebaseAuth.instance.signOut();
+
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isLoggedIn', false);
+                await prefs.setBool('rememberMe', false);
+
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const OnboardingScreen(),
+                    builder: (context) => const AuthenticationScreen(),
                   ),
                   (route) => false,
                 );

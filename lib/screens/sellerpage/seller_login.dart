@@ -4,14 +4,15 @@ import 'package:flutter/material.dart';
 import '../../services/seller_service.dart';
 import 'nav_bar.dart';
 
-class AuthenticationScreen extends StatefulWidget {
-  const AuthenticationScreen({super.key});
+class SellerAuthenticationScreen extends StatefulWidget {
+  const SellerAuthenticationScreen({super.key});
 
   @override
-  State<AuthenticationScreen> createState() => _AuthenticationScreenState();
+  State<SellerAuthenticationScreen> createState() =>
+      _AuthenticationScreenState();
 }
 
-class _AuthenticationScreenState extends State<AuthenticationScreen> {
+class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
   bool _isLogin = true;
 
   // Controllers
@@ -280,7 +281,6 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
     try {
       if (_isLogin) {
-        // 🔑 Login
         await _auth.signInWithEmailAndPassword(
           email: email,
           password: password,
@@ -295,12 +295,9 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         final user = userCredential.user;
 
         if (user != null) {
-          // ✅ Create seller profile
           await SellerService.createSellerProfile(user, fullName, email);
         }
       }
-
-      // ✅ Navigate to main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
