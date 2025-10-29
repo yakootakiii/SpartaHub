@@ -32,6 +32,7 @@ class _OrderScreenState extends State<OrderScreen>
       appBar: AppBar(
         title: const Text('My Orders'),
         backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
@@ -74,10 +75,7 @@ class _OrdersTabState extends State<_OrdersTab>
       stream: FirebaseFirestore.instance
           .collection('orders')
           .where('sellerId', isEqualTo: userId)
-          .where(
-            'acceptedBySeller',
-            isEqualTo: false,
-          ) // 🔹 Only unaccepted orders
+          .where('acceptedBySeller', isEqualTo: false) // Only unaccepted orders
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

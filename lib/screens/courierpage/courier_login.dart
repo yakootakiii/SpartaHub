@@ -39,7 +39,9 @@ class _AuthenticationScreenState extends State<DeliverAuthenticationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SafeArea(
@@ -163,7 +165,7 @@ class _AuthenticationScreenState extends State<DeliverAuthenticationScreen> {
     );
   }
 
-  // 🔑 Forgot Password Dialog
+  // Forgot Password Dialog
   void _showForgotPasswordDialog() {
     final TextEditingController resetEmailController = TextEditingController();
 

@@ -40,7 +40,9 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SafeArea(
@@ -164,7 +166,7 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
     );
   }
 
-  // 🔑 Forgot Password Dialog
+  // Forgot Password Dialog
   void _showForgotPasswordDialog() {
     final TextEditingController resetEmailController = TextEditingController();
 
@@ -299,11 +301,11 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
         }
       }
 
-      // ✅ Save seller login state
+      // Save seller login state
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isSeller', true);
 
-      // ✅ Navigate to seller main screen
+      // Navigate to seller main screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -315,7 +317,7 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
     }
   }
 
-  /// 🔹 Build text field widget
+  /// Build text field widget
   Widget _buildTextField(
     String label,
     IconData icon, {

@@ -4,9 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class OrderService {
   static void showCheckoutDialog(
-    BuildContext context, [
+    BuildContext context, {
     List<String>? selectedDocIds,
-  ]) {
+    Map<String, dynamic>? directOrderItem,
+  }) {
     const double deliveryFee = 25.0;
     final user = FirebaseAuth.instance.currentUser;
 
@@ -38,26 +39,41 @@ class OrderService {
 
             // Filter selected items
             final allDocs = snapshot.data!.docs;
-            final cartDocs =
-                (selectedDocIds != null && selectedDocIds.isNotEmpty)
-                ? allDocs
-                      .where((doc) => selectedDocIds.contains(doc.id))
-                      .toList()
-                : allDocs;
 
-            if (cartDocs.isEmpty) {
-              return const Center(
-                child: Text("No items selected for checkout."),
-              );
+            List<QueryDocumentSnapshot> cartDocs;
+
+            final items = <Map<String, dynamic>>[];
+            double subtotal = 0;
+
+            if (directOrderItem != null) {
+              // If direct order, we’ll skip cart and just use this single item
+              cartDocs = [];
+            } else if (selectedDocIds != null && selectedDocIds.isNotEmpty) {
+              cartDocs = allDocs
+                  .where((doc) => selectedDocIds.contains(doc.id))
+                  .toList();
+            } else {
+              cartDocs = allDocs;
             }
 
             // Calculate subtotal
-            double subtotal = 0;
-            for (var doc in cartDocs) {
-              final data = doc.data() as Map<String, dynamic>;
-              final price = (data['price'] ?? 0).toDouble();
-              final quantity = (data['quantity'] ?? 1).toInt();
-              subtotal += price * quantity;
+            if (directOrderItem != null) {
+              items.add(directOrderItem);
+              subtotal =
+                  (directOrderItem['price'] ?? 0) *
+                  (directOrderItem['quantity'] ?? 1);
+            } else {
+              for (var doc in cartDocs) {
+                final data = doc.data() as Map<String, dynamic>;
+                items.add({
+                  'foodName': data['foodName'] ?? 'Unnamed item',
+                  'quantity': data['quantity'] ?? 1,
+                  'price': data['price'] ?? 0,
+                  'sellerId': data['sellerId'],
+                  'sellerName': data['storeName'],
+                });
+                subtotal += (data['price'] ?? 0) * (data['quantity'] ?? 1);
+              }
             }
 
             final total = subtotal + deliveryFee;
@@ -211,21 +227,37 @@ class OrderService {
                         //   'deliveryAddress': 'CICS Building, Room 106',
                         // });
 
+                        // Determine if it's a direct order or from cart
+                        final isDirectOrder = directOrderItem != null;
+
                         await orderRef.set({
                           'buyerId': userId,
                           'buyerName': buyerName,
-                          'sellerId': items.first['sellerId'],
-                          'sellerName': items.first['sellerName'],
+                          'sellerId': isDirectOrder
+                              ? directOrderItem['sellerId']
+                              : items.first['sellerId'],
+                          'sellerName': isDirectOrder
+                              ? directOrderItem['sellerName']
+                              : items.first['sellerName'],
                           'courierId': null,
                           'courierName': null,
                           'acceptedBySeller': false,
                           'status': 'Processing',
                           'createdAt': FieldValue.serverTimestamp(),
-                          'items': items,
-                          'subtotal': subtotal,
+                          'items': isDirectOrder ? [directOrderItem] : items,
+                          'subtotal': isDirectOrder
+                              ? (directOrderItem['price'] ?? 0) *
+                                    (directOrderItem['quantity'] ?? 1)
+                              : subtotal,
                           'deliveryFee': deliveryFee,
-                          'total': subtotal + deliveryFee,
+                          'total': isDirectOrder
+                              ? ((directOrderItem['price'] ?? 0) *
+                                        (directOrderItem['quantity'] ?? 1)) +
+                                    deliveryFee
+                              : subtotal + deliveryFee,
                           'deliveryAddress': 'CICS Building, Room 106',
+                          'courierConfirmation': false,
+                          'userConfirmation': false,
                         }, SetOptions(merge: true));
 
                         // Clear selected items from cart

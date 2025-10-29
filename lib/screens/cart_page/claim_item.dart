@@ -36,7 +36,7 @@ class ClaimItem extends StatelessWidget {
             'claimCode': randomCode,
           });
 
-      // ✅ Show confirmation dialog
+      // Show confirmation dialog
       if (!context.mounted) return;
       showDialog(
         context: context,
@@ -92,7 +92,7 @@ class ClaimItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🟢 Listen to the donation document live
+    // Listen to the donation document live
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('donations')

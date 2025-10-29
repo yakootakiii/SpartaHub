@@ -47,147 +47,153 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+    return PopScope(
+      canPop: false, // prevent automatic popping (black screen)
+      onPopInvokedWithResult: (didPop, result) async {
+        // This callback runs whenever a pop is attempted
+        // For now, we’ll simply prevent it from popping
+        // but you can add custom logic here if needed.
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                _isLogin ? 'Welcome Back' : 'Create Account',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _isLogin
-                    ? 'Sign in to continue to SpartaHub'
-                    : 'Join the SpartaHub community',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 40),
 
-              if (!_isLogin) ...[
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  _isLogin ? 'Welcome Back' : 'Create Account',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _isLogin
+                      ? 'Sign in to continue to SpartaHub'
+                      : 'Join the SpartaHub community',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 40),
+
+                if (!_isLogin) ...[
+                  _buildTextField(
+                    'Full Name',
+                    Icons.person_outline,
+                    controller: _fullNameController,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 _buildTextField(
-                  'Full Name',
-                  Icons.person_outline,
-                  controller: _fullNameController,
+                  'Email',
+                  Icons.email_outlined,
+                  controller: _emailController,
                 ),
                 const SizedBox(height: 16),
-              ],
-
-              _buildTextField(
-                'Email',
-                Icons.email_outlined,
-                controller: _emailController,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Password',
-                Icons.lock_outline,
-                isPassword: true,
-                controller: _passwordController,
-              ),
-              if (!_isLogin) ...[
-                const SizedBox(height: 16),
                 _buildTextField(
-                  'Confirm Password',
+                  'Password',
                   Icons.lock_outline,
                   isPassword: true,
-                  controller: _confirmPasswordController,
+                  controller: _passwordController,
                 ),
-              ],
+                if (!_isLogin) ...[
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    'Confirm Password',
+                    Icons.lock_outline,
+                    isPassword: true,
+                    controller: _confirmPasswordController,
+                  ),
+                ],
 
-              if (_isLogin) ...[
-                const SizedBox(height: 12),
+                if (_isLogin) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _rememberMe,
+                            onChanged: (value) {
+                              setState(() {
+                                _rememberMe = value!;
+                              });
+                            },
+                            activeColor: const Color(0xFFCD0000),
+                          ),
+                          const Text("Remember Me"),
+                        ],
+                      ),
+                      TextButton(
+                        onPressed: _showForgotPasswordDialog,
+                        child: const Text('Forgot Password?'),
+                      ),
+                    ],
+                  ),
+                ],
+
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _handleAuth,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFCD0000),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      _isLogin ? 'Sign In' : 'Create Account',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              _rememberMe = value!;
-                            });
-                          },
-                          activeColor: const Color(0xFFCD0000),
-                        ),
-                        const Text("Remember Me"),
-                      ],
+                    Text(
+                      _isLogin
+                          ? "Don't have an account? "
+                          : "Already have an account? ",
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                     TextButton(
-                      onPressed: _showForgotPasswordDialog,
-                      child: const Text('Forgot Password?'),
+                      onPressed: () {
+                        setState(() {
+                          _isLogin = !_isLogin;
+                        });
+                      },
+                      child: Text(
+                        _isLogin ? 'Sign Up' : 'Sign In',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
               ],
-
-              const SizedBox(height: 32),
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _handleAuth,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFCD0000),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    _isLogin ? 'Sign In' : 'Create Account',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _isLogin
-                        ? "Don't have an account? "
-                        : "Already have an account? ",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isLogin = !_isLogin;
-                      });
-                    },
-                    child: Text(
-                      _isLogin ? 'Sign Up' : 'Sign In',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),

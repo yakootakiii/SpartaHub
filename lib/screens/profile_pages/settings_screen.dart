@@ -9,8 +9,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
-  bool _emailNotifications = false;
-  bool _locationServices = true;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSettingsSection('Account', [
             _buildSettingsItem('Edit Profile', Icons.person_outline, () {}),
             _buildSettingsItem('Change Password', Icons.lock_outline, () {}),
-            _buildSettingsItem(
-              'Privacy Settings',
-              Icons.privacy_tip_outlined,
-              () {},
-            ),
           ]),
 
           _buildSettingsSection('Notifications', [
@@ -45,31 +38,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 });
               },
             ),
-            _buildSwitchItem(
-              'Email Notifications',
-              Icons.email_outlined,
-              _emailNotifications,
-              (value) {
-                setState(() {
-                  _emailNotifications = value;
-                });
-              },
-            ),
-          ]),
-
-          _buildSettingsSection('App Preferences', [
-            _buildSwitchItem(
-              'Location Services',
-              Icons.location_on_outlined,
-              _locationServices,
-              (value) {
-                setState(() {
-                  _locationServices = value;
-                });
-              },
-            ),
-            _buildSettingsItem('Language', Icons.language, () {}),
-            _buildSettingsItem('App Theme', Icons.palette_outlined, () {}),
           ]),
 
           _buildSettingsSection('Support', [

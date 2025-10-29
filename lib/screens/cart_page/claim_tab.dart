@@ -36,7 +36,7 @@ class ClaimTab extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           itemCount: donations.length + 1,
           itemBuilder: (context, index) {
-            // 👇 Display header first
+            // Display header first
             if (index == 0) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),

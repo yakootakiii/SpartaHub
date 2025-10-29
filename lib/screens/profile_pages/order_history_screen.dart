@@ -199,6 +199,42 @@ class OrderHistoryScreen extends StatelessWidget {
     List<Map<String, dynamic>> itemDetails,
     Map<String, dynamic> data,
   ) {
+    Future<void> _checkAndProcessDeliveryConfirmation(String orderId) async {
+      final orderRef = FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId);
+      final orderSnap = await orderRef.get();
+
+      if (!orderSnap.exists) return;
+
+      final orderData = orderSnap.data()!;
+      final userConfirmed = orderData['userConfirmation'] ?? false;
+      final courierConfirmed = orderData['courierConfirmation'] ?? false;
+      final courierId = orderData['courierId'];
+      final deliveryFee = (orderData['deliveryFee'] ?? 0).toDouble();
+
+      if (userConfirmed && courierConfirmed && courierId != null) {
+        final courierRef = FirebaseFirestore.instance
+            .collection('couriers')
+            .doc(courierId);
+
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final courierSnap = await transaction.get(courierRef);
+          final currentEarnings = (courierSnap.data()?['earnings'] ?? 0)
+              .toDouble();
+
+          transaction.update(courierRef, {
+            'earnings': currentEarnings + deliveryFee,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.update(orderRef, {'status': 'Delivered'});
+        });
+
+        debugPrint('Earnings processed successfully for courier $courierId');
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -214,96 +250,154 @@ class OrderHistoryScreen extends StatelessWidget {
           minChildSize: 0.4,
           builder: (_, controller) => Padding(
             padding: const EdgeInsets.all(16),
-            child: ListView(
-              controller: controller,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Order Details',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _buildItemsList(itemNames, itemDetails),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Subtotal:'),
-                    const Spacer(),
-                    Text('₱${(data['subtotal'] ?? 0).toStringAsFixed(2)}'),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Delivery Fee:'),
-                    const Spacer(),
-                    Text('₱${(data['deliveryFee'] ?? 0).toStringAsFixed(2)}'),
-                  ],
-                ),
-                const Divider(),
-                Row(
-                  children: [
-                    const Text(
-                      'Total:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '₱${(data['total'] ?? 0).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (status == 'Processing')
-                  ElevatedButton(
-                    onPressed: () async {
-                      await FirebaseFirestore.instance
-                          .collection('orders')
-                          .doc(orderId)
-                          .update({'status': 'Cancelled'});
+            child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('orders')
+                  .doc(orderId)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Order cancelled.')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(40),
+                final orderData =
+                    snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                final currentStatus = orderData['status'] ?? status;
+                final userConfirmed = orderData['userConfirmation'] ?? false;
+                final courierConfirmed =
+                    orderData['courierConfirmation'] ?? false;
+
+                return ListView(
+                  controller: controller,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Order Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            currentStatus,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text('Cancel Order'),
-                  ),
-                const SizedBox(height: 16),
-              ],
+                    const SizedBox(height: 16),
+                    _buildItemsList(itemNames, itemDetails),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Text('Subtotal:'),
+                        const Spacer(),
+                        Text('₱${(data['subtotal'] ?? 0).toStringAsFixed(2)}'),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('Delivery Fee:'),
+                        const Spacer(),
+                        Text(
+                          '₱${(data['deliveryFee'] ?? 0).toStringAsFixed(2)}',
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Row(
+                      children: [
+                        const Text(
+                          'Total:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '₱${(data['total'] ?? 0).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Cancel button (Processing only)
+                    if (currentStatus == 'Processing')
+                      ElevatedButton(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('orders')
+                              .doc(orderId)
+                              .update({'status': 'Cancelled'});
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Order cancelled.')),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(40),
+                        ),
+                        child: const Text('Cancel Order'),
+                      ),
+
+                    // Order Received button
+                    if (currentStatus == 'Delivered' && !userConfirmed)
+                      ElevatedButton(
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('orders')
+                              .doc(orderId)
+                              .update({'userConfirmation': true});
+
+                          // Check if courier also confirmed
+                          if (courierConfirmed == true) {
+                            await _checkAndProcessDeliveryConfirmation(orderId);
+                          }
+
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Delivery confirmed successfully.'),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(40),
+                        ),
+                        child: const Text('Order Received'),
+                      ),
+
+                    if (currentStatus == 'Delivered' && userConfirmed)
+                      const Text(
+                        'You have confirmed this delivery.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+
+                    const SizedBox(height: 16),
+                  ],
+                );
+              },
             ),
           ),
         );

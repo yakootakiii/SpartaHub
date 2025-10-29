@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/order_service.dart';
 
 class FoodDetailScreen extends StatefulWidget {
   final String foodName;
@@ -24,7 +25,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   int _quantity = 1;
   bool _isFavorite = false;
   // String _selectedSize = 'Regular';
-  final List<String> _selectedAddOns = [];
+  // final List<String> _selectedAddOns = [];
 
   @override
   void initState() {
@@ -158,7 +159,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Delicious and authentic Filipino dish made with tender chicken cooked in soy sauce, vinegar, and aromatic spices. Served with steamed rice.',
+                    'No Description Provided.',
                     style: TextStyle(color: Colors.grey[600], height: 1.5),
                   ),
 
@@ -222,16 +223,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   SizedBox(height: 24),
 
                   // Add-ons
-                  Text(
-                    'Add-ons',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 12),
-                  _buildAddOnOption('Extra Rice', 15),
-                  _buildAddOnOption('Iced Tea', 25),
-                  _buildAddOnOption('Extra Sauce', 10),
+                  // Text(
+                  //   'Add-ons',
+                  //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  // ),
+                  // SizedBox(height: 12),
+                  // _buildAddOnOption('Extra Rice', 15),
+                  // _buildAddOnOption('Iced Tea', 25),
+                  // _buildAddOnOption('Extra Sauce', 10),
 
-                  SizedBox(height: 40),
+                  // SizedBox(height: 40),
                 ],
               ),
             ),
@@ -276,7 +277,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     'foodName': widget.foodName,
                     'storeName': widget.restaurant,
                     'price': widget.price,
-                    'quantity': 1,
+                    'quantity': _quantity, // use current quantity
                     'createdAt': FieldValue.serverTimestamp(),
                     'sellerId': widget.sellerId,
                     'sellerName': widget.restaurant,
@@ -293,14 +294,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     final docId = existing.docs.first.id;
                     final currentQty = existing.docs.first['quantity'] ?? 1;
                     await cartRef.doc(docId).update({
-                      'quantity': currentQty + 1,
+                      'quantity':
+                          currentQty + _quantity, // add the selected quantity
                     });
                   } else {
                     await cartRef.add(cartItem);
                   }
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Added to cart!')),
+                    SnackBar(content: Text('Added $_quantity to cart!')),
                   );
                 },
                 icon: const Icon(
@@ -325,18 +327,25 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(
+                  OrderService.showCheckoutDialog(
                     context,
-                  ).showSnackBar(SnackBar(content: Text('Order placed!')));
+                    directOrderItem: {
+                      'foodName': widget.foodName,
+                      'quantity': _quantity,
+                      'price': widget.price,
+                      'sellerId': widget.sellerId,
+                      'sellerName': widget.restaurant,
+                    },
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFCD0000),
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFFCD0000),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: Text(
+                child: const Text(
                   'Order Now',
                   style: TextStyle(
                     fontSize: 16,
@@ -352,68 +361,27 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     );
   }
 
-  // Widget _buildSizeOption(String size, String price) {
-  //   bool isSelected = _selectedSize == size;
-  //   return Expanded(
-  //     child: GestureDetector(
-  //       onTap: () {
+  // Widget _buildAddOnOption(String name, double price) {
+  //   bool isSelected = _selectedAddOns.contains(name);
+  //   return Container(
+  //     margin: EdgeInsets.only(bottom: 8),
+  //     child: CheckboxListTile(
+  //       value: isSelected,
+  //       onChanged: (bool? value) {
   //         setState(() {
-  //           _selectedSize = size;
+  //           if (value == true) {
+  //             _selectedAddOns.add(name);
+  //           } else {
+  //             _selectedAddOns.remove(name);
+  //           }
   //         });
   //       },
-  //       child: Container(
-  //         margin: EdgeInsets.only(right: size != 'Large' ? 8 : 0),
-  //         padding: EdgeInsets.all(12),
-  //         decoration: BoxDecoration(
-  //           color: isSelected
-  //               ? Color(0xFFCD0000).withValues(alpha: 0.1)
-  //               : Colors.grey[100],
-  //           border: Border.all(
-  //             color: isSelected ? Color(0xFFCD0000) : Colors.grey[300]!,
-  //           ),
-  //           borderRadius: BorderRadius.circular(8),
-  //         ),
-  //         child: Column(
-  //           children: [
-  //             Text(
-  //               size,
-  //               style: TextStyle(
-  //                 fontWeight: FontWeight.w600,
-  //                 color: isSelected ? Color(0xFFCD0000) : Colors.black,
-  //               ),
-  //             ),
-  //             Text(
-  //               price,
-  //               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
+  //       title: Text(name),
+  //       subtitle: Text('+ ₱${price.toStringAsFixed(0)}'),
+  //       activeColor: Color(0xFFCD0000),
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  //       tileColor: Colors.grey[50],
   //     ),
   //   );
   // }
-
-  Widget _buildAddOnOption(String name, double price) {
-    bool isSelected = _selectedAddOns.contains(name);
-    return Container(
-      margin: EdgeInsets.only(bottom: 8),
-      child: CheckboxListTile(
-        value: isSelected,
-        onChanged: (bool? value) {
-          setState(() {
-            if (value == true) {
-              _selectedAddOns.add(name);
-            } else {
-              _selectedAddOns.remove(name);
-            }
-          });
-        },
-        title: Text(name),
-        subtitle: Text('+ ₱${price.toStringAsFixed(0)}'),
-        activeColor: Color(0xFFCD0000),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: Colors.grey[50],
-      ),
-    );
-  }
 }

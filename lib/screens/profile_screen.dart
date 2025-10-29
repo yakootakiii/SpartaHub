@@ -5,16 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Core Screens
-import 'authentication_screen.dart'; // ✅ add this if you're navigating to login
+import 'authentication_screen.dart';
 
 // Profile Pages
 import 'profile_pages/about_app.dart';
 import 'profile_pages/order_history_screen.dart';
 import 'profile_pages/settings_screen.dart';
 import 'profile_pages/help_support_screen.dart';
-import 'profile_pages/delivery_addresses.dart';
-import 'profile_pages/payment_methods.dart';
-import 'profile_pages/notifications.dart';
 
 import 'sellerpage/seller_login.dart';
 import 'courierpage/courier_login.dart';
@@ -187,47 +184,6 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     _buildProfileOption(
-                      'Delivery Addresses',
-                      Icons.location_on_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DeliveryAddresses(),
-                        ),
-                      ),
-                    ),
-                    _buildProfileOption(
-                      'Payment Methods',
-                      Icons.payment_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PaymentMethods(),
-                        ),
-                      ),
-                    ),
-                    _buildProfileOption(
-                      'Become a Courier',
-                      Icons.shopping_bag_outlined,
-                      () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const DeliverAuthenticationScreen(),
-                        ),
-                      ),
-                    ),
-                    _buildProfileOption(
-                      'Notifications',
-                      Icons.notifications_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Notifications(),
-                        ),
-                      ),
-                    ),
-                    _buildProfileOption(
                       'Settings',
                       Icons.settings_outlined,
                       () => Navigator.push(
@@ -258,9 +214,20 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     _buildProfileOption(
+                      'Login as Courier',
+                      Icons.directions_walk_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DeliverAuthenticationScreen(),
+                        ),
+                      ),
+                    ),
+                    _buildProfileOption(
                       'Login as Restaurant',
                       Icons.shopping_bag_outlined,
-                      () => Navigator.pushReplacement(
+                      () => Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
@@ -268,7 +235,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildProfileOption('Sign Out', Icons.logout, () {
                       _showSignOutDialog(context);
                     }, isDestructive: true),

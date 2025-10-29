@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'courier_profile_pages/orders.dart';
 import 'courier_profile_pages/earnings.dart';
 import 'courier_profile_pages/settings_screen.dart';
 import 'courier_profile_pages/help_support_screen.dart';
-
-import '../onboarding_screen.dart';
+import '../authentication_screen.dart';
 
 class CourierProfileScreen extends StatelessWidget {
   const CourierProfileScreen({super.key});
 
-  // Fetch deliverer's name from Firestore
   Future<String> _getDelivererName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return 'Guest';
 
     final doc = await FirebaseFirestore.instance
-        .collection('deliverers')
+        .collection('couriers')
         .doc(user.uid)
         .get();
 
@@ -28,16 +27,6 @@ class CourierProfileScreen extends StatelessWidget {
     }
 
     return 'Guest';
-  }
-
-  // Handle logout
-  Future<void> _signOut(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      (route) => false,
-    );
   }
 
   @override
@@ -164,12 +153,26 @@ class CourierProfileScreen extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    _buildProfileOption(
-                      'Sign Out',
-                      Icons.logout,
-                      () => _signOut(context),
-                      isDestructive: true,
-                    ),
+                    _buildProfileOption('Sign Out', Icons.logout, () async {
+                      final prefs = await SharedPreferences.getInstance();
+
+                      // Fully sign out the seller
+                      await FirebaseAuth.instance.signOut();
+
+                      // Clear local login flags
+                      await prefs.setBool('isSeller', false);
+                      await prefs.setBool('isLoggedIn', false);
+                      await prefs.setBool('rememberMe', false);
+
+                      // Navigate back to user authentication screen
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AuthenticationScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    }, isDestructive: true),
                   ],
                 ),
               ),

@@ -131,7 +131,6 @@ class _CartTabState extends State<CartTab> {
                           child: ElevatedButton(
                             onPressed: total > 0
                                 ? () {
-                                    // Pass only selected items to checkout
                                     final selectedDocs = _selectedItems.entries
                                         .where((entry) => entry.value)
                                         .map((entry) => entry.key)
@@ -141,7 +140,7 @@ class _CartTabState extends State<CartTab> {
 
                                     OrderService.showCheckoutDialog(
                                       context,
-                                      selectedDocs,
+                                      selectedDocIds: selectedDocs,
                                     );
                                   }
                                 : null,
