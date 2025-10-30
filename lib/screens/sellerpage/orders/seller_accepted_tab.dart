@@ -237,6 +237,8 @@ class SellerAcceptedTabState extends State<SellerAcceptedTab>
                     // Update order status
                     await orderRef.update({'status': 'Ready for Pick-up'});
 
+                    final orderTitle = orderId.substring(0, 6);
+
                     // Send notification
                     await FirebaseFirestore.instance
                         .collection('notifications')
@@ -245,10 +247,10 @@ class SellerAcceptedTabState extends State<SellerAcceptedTab>
                         .add({
                           'title': 'Order Ready for Pick-up',
                           'message':
-                              'Your assigned order ($orderId) is now ready for pick-up.',
+                              'Your assigned order ($orderTitle) is now ready for pick-up.',
                           'timestamp': FieldValue.serverTimestamp(),
                           'isRead': false,
-                          'type': 'new_order',
+                          'type': 'ready_for_pickup',
                         });
 
                     // Close dialog/page

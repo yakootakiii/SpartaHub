@@ -1,120 +1,120 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../widgets/notifications.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text(
-          'Activity',
-          style: TextStyle(
-            color: Color(0xFFCD0000),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: const Text('Activity'),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(icon: Icon(Icons.mark_email_read), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.mark_email_read),
+            onPressed: () async {
+              // Mark all as read
+              final snapshot = await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(userId)
+                  .collection('items')
+                  .get();
+
+              for (var doc in snapshot.docs) {
+                doc.reference.update({'isRead': true});
+              }
+            },
+          ),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          _buildNotificationItem(
-            'Order Delivered',
-            'Your Chicken Adobo order has been delivered successfully!',
-            Icons.check_circle,
-            Colors.green,
-            '2 min ago',
-          ),
-          _buildNotificationItem(
-            'New Promotion',
-            'Get 20% off on your next grocery order. Limited time offer!',
-            Icons.local_offer,
-            Colors.orange,
-            '1 hour ago',
-          ),
-          _buildNotificationItem(
-            'Order Confirmed',
-            'Your advance order for tomorrow has been confirmed by Filipino Kitchen.',
-            Icons.restaurant,
-            Colors.blue,
-            '3 hours ago',
-          ),
-          _buildNotificationItem(
-            'Someone Bought a Meal',
-            'A kind soul bought a meal for students in need. Thank you for your generosity!',
-            Icons.favorite,
-            Colors.red,
-            '1 day ago',
-          ),
-          _buildNotificationItem(
-            'New Vendor Joined',
-            'Sweet Treats is now available on SpartaHub. Check out their desserts!',
-            Icons.store,
-            Colors.purple,
-            '2 days ago',
-          ),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(userId)
+            .collection('items')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                'No notifications yet.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            );
+          }
+
+          final notifications = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final data =
+                  notifications[index].data() as Map<String, dynamic>? ?? {};
+
+              final title = data['title'] ?? 'No Title';
+              final message = data['message'] ?? 'No Message';
+              final isRead = data['isRead'] ?? false;
+              final timestamp = data['timestamp'] as Timestamp?;
+              final time = timestamp != null
+                  ? _formatTime(timestamp.toDate())
+                  : 'Unknown time';
+
+              final type = data['type'] ?? 'general';
+
+              return NotificationItem(
+                title: title,
+                message: message,
+                type: type,
+                time: time,
+                isRead: isRead,
+                style: _getTypeStyle(type),
+              );
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildNotificationItem(
-    String title,
-    String message,
-    IconData icon,
-    Color color,
-    String time,
-  ) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  message,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  time,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  // Returns icon and color based on type
+  MapEntry<IconData, Color> _getTypeStyle(String type) {
+    switch (type) {
+      case 'seller_accepted':
+        return MapEntry(Icons.shopping_bag, Colors.green);
+
+      case 'courier_picked_up':
+        return MapEntry(Icons.directions_walk, Colors.orange);
+      case 'courier_otw':
+        return MapEntry(Icons.directions_walk, Colors.blue);
+      case 'delivered':
+        return MapEntry(Icons.check, Colors.green);
+      default:
+        return MapEntry(Icons.notifications, Colors.grey);
+    }
+  }
+
+  // Format timestamp to relative time string
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${diff.inDays} days ago';
   }
 }
