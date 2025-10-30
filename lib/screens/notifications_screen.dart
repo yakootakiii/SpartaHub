@@ -92,15 +92,17 @@ class NotificationsScreen extends StatelessWidget {
   // Returns icon and color based on type
   MapEntry<IconData, Color> _getTypeStyle(String type) {
     switch (type) {
-      case 'seller_accepted':
+      case 'new_order':
         return MapEntry(Icons.shopping_bag, Colors.green);
 
       case 'courier_picked_up':
         return MapEntry(Icons.directions_walk, Colors.orange);
       case 'courier_otw':
         return MapEntry(Icons.directions_walk, Colors.blue);
-      case 'delivered':
-        return MapEntry(Icons.check, Colors.green);
+      case 'courier_delivered':
+        return MapEntry(Icons.check, Colors.red[700]!);
+      case 'order_delivery_confirmation':
+        return MapEntry(Icons.check, Colors.green[700]!);
       default:
         return MapEntry(Icons.notifications, Colors.grey);
     }
@@ -113,6 +115,7 @@ class NotificationsScreen extends StatelessWidget {
 
     if (diff.inSeconds < 60) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours == 1) return '${diff.inHours} hour ago';
     if (diff.inHours < 24) return '${diff.inHours} hours ago';
     if (diff.inDays == 1) return 'Yesterday';
     return '${diff.inDays} days ago';

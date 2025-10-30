@@ -98,6 +98,8 @@ class CourierNotificationsScreen extends StatelessWidget {
         return MapEntry(Icons.local_offer, Colors.orange);
       case 'earnings_update':
         return MapEntry(Icons.attach_money, Colors.blue);
+      case 'courier_earnings':
+        return MapEntry(Icons.attach_money, Colors.blue);
       default:
         return MapEntry(Icons.notifications, Colors.grey);
     }

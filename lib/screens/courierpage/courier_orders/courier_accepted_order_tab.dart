@@ -265,66 +265,158 @@ class _AcceptedOrdersTabState extends State<AcceptedOrdersTab>
                         return const SizedBox.shrink();
                       }
 
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: buttonColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () async {
-                          // Decide new status and perform a single update when delivering
-                          if (currentStatus == 'Ready for Pick-up') {
-                            final newStatus = 'Picked Up';
-                            await FirebaseFirestore.instance
-                                .collection('orders')
-                                .doc(orderId)
-                                .update({'status': newStatus});
-                            setModalState(() {
-                              currentStatus = newStatus;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Order marked as $newStatus'),
+                      return Row(
+                        children: [
+                          // Main action button (Picked Up / Mark as Delivered)
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: buttonColor,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                            );
-                          } else if (currentStatus == 'Picked Up') {
-                            final newStatus = 'Delivered';
-                            // update status and courierConfirmation in one write
-                            await FirebaseFirestore.instance
-                                .collection('orders')
-                                .doc(orderId)
-                                .update({
-                                  'status': newStatus,
-                                  'courierConfirmation': true,
-                                });
+                              onPressed: () async {
+                                final orderRef = FirebaseFirestore.instance
+                                    .collection('orders')
+                                    .doc(orderId);
 
-                            // process earnings if buyer already confirmed
-                            await _checkAndProcessEarnings(orderId);
+                                final orderSnapshot = await orderRef.get();
+                                final userId = orderSnapshot.data()?['buyerId'];
+                                final courierName = orderSnapshot
+                                    .data()?['courierName'];
+                                final orderTitle = orderId.substring(0, 6);
 
-                            setModalState(() {
-                              currentStatus = newStatus;
-                            });
+                                if (currentStatus == 'Ready for Pick-up') {
+                                  final newStatus = 'Picked Up';
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Order marked as $newStatus'),
+                                  await orderRef.update({'status': newStatus});
+
+                                  await FirebaseFirestore.instance
+                                      .collection('notifications')
+                                      .doc(userId)
+                                      .collection('items')
+                                      .add({
+                                        'title': 'Order Picked Up',
+                                        'message':
+                                            '$courierName has picked up your order $orderTitle and is on the way.',
+                                        'timestamp':
+                                            FieldValue.serverTimestamp(),
+                                        'isRead': false,
+                                        'type': 'courier_picked_up',
+                                      });
+
+                                  setModalState(
+                                    () => currentStatus = newStatus,
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Order marked as $newStatus',
+                                      ),
+                                    ),
+                                  );
+                                } else if (currentStatus == 'Picked Up') {
+                                  final newStatus = 'Delivered';
+
+                                  await orderRef.update({
+                                    'status': newStatus,
+                                    'courierConfirmation': true,
+                                  });
+
+                                  // 📨 Send "Delivered" notification to the buyer
+                                  await FirebaseFirestore.instance
+                                      .collection('notifications')
+                                      .doc(userId)
+                                      .collection('items')
+                                      .add({
+                                        'title': 'Order Delivered',
+                                        'message':
+                                            '$courierName has marked your order $orderTitle as delivered. Please confirm receipt.',
+                                        'timestamp':
+                                            FieldValue.serverTimestamp(),
+                                        'isRead': false,
+                                        'type': 'courier_delivered',
+                                      });
+
+                                  // Process courier earnings if buyer already confirmed
+                                  await _checkAndProcessEarnings(orderId);
+
+                                  setModalState(
+                                    () => currentStatus = newStatus,
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Order marked as $newStatus',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Text(
+                                buttonText,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
-                            );
-
-                            // keep sheet open to show waiting message; close only if you want:
-                            // Navigator.pop(context);
-                          }
-                        },
-                        child: Text(
-                          buttonText,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.white,
+                            ),
                           ),
-                        ),
+
+                          // 🟠 Circular "Ping Buyer" button (only when Picked Up)
+                          if (currentStatus == 'Picked Up') ...[
+                            const SizedBox(width: 12),
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Colors.red,
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_active,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () async {
+                                  final orderSnapshot = await FirebaseFirestore
+                                      .instance
+                                      .collection('orders')
+                                      .doc(orderId)
+                                      .get();
+                                  final buyerId = orderSnapshot
+                                      .data()?['buyerId'];
+                                  final courierName = orderSnapshot
+                                      .data()?['courierName'];
+                                  final orderTitle = orderId.substring(0, 6);
+
+                                  await FirebaseFirestore.instance
+                                      .collection('notifications')
+                                      .doc(buyerId)
+                                      .collection('items')
+                                      .add({
+                                        'title': 'Courier On The Way',
+                                        'message':
+                                            '$courierName is now on the way to deliver your order $orderTitle.',
+                                        'timestamp':
+                                            FieldValue.serverTimestamp(),
+                                        'isRead': false,
+                                        'type': 'courier_otw',
+                                      });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Ping sent to buyer'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
                       );
                     },
                   ),

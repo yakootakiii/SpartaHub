@@ -52,12 +52,12 @@ class NotificationItem extends StatelessWidget {
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   message,
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   time,
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),

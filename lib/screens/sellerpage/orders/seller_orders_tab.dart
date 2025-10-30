@@ -212,10 +212,30 @@ class _OrdersTabState extends State<OrdersTab>
                 ),
               ),
               onPressed: () async {
+                final orderRef = FirebaseFirestore.instance
+                    .collection('orders')
+                    .doc(orderId);
+                final orderSnapshot = await orderRef.get();
+                final userId = orderSnapshot.data()?['buyerId'];
+                final sellerName = orderSnapshot.data()?['sellerName'];
+                final orderTitle = orderId.substring(0, 6);
                 await FirebaseFirestore.instance
                     .collection('orders')
                     .doc(orderId)
                     .update({'status': 'Accepted', 'acceptedBySeller': true});
+
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .doc(userId)
+                    .collection('items')
+                    .add({
+                      'title': 'Order Accepted',
+                      'message':
+                          '$sellerName has accepted your order $orderTitle.',
+                      'timestamp': FieldValue.serverTimestamp(),
+                      'isRead': false,
+                      'type': 'new_order',
+                    });
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -363,10 +363,45 @@ class OrderHistoryScreen extends StatelessWidget {
                     if (currentStatus == 'Delivered' && !userConfirmed)
                       ElevatedButton(
                         onPressed: () async {
+                          final orderSnapshot = await FirebaseFirestore.instance
+                              .collection('orders')
+                              .doc(orderId)
+                              .get();
+
+                          final buyerId = orderSnapshot['buyerId'];
+                          final courierId = orderSnapshot['courierId'];
+                          final orderTitle = orderId.substring(0, 6);
+
                           await FirebaseFirestore.instance
                               .collection('orders')
                               .doc(orderId)
                               .update({'userConfirmation': true});
+
+                          await FirebaseFirestore.instance
+                              .collection('notifications')
+                              .doc(buyerId)
+                              .collection('items')
+                              .add({
+                                'title': 'Order Delivered',
+                                'message':
+                                    'Your order $orderTitle has been successfully delivered.',
+                                'timestamp': FieldValue.serverTimestamp(),
+                                'isRead': false,
+                                'type': 'order_delivery_confirmation',
+                              });
+
+                          await FirebaseFirestore.instance
+                              .collection('notifications')
+                              .doc(courierId)
+                              .collection('items')
+                              .add({
+                                'title': 'Delivery Confirmed',
+                                'message':
+                                    'Delivery confirmed! ₱25 has been added to your earnings for order $orderTitle.',
+                                'timestamp': FieldValue.serverTimestamp(),
+                                'isRead': false,
+                                'type': 'courier_earnings',
+                              });
 
                           // Check if courier also confirmed
                           if (courierConfirmed == true) {
