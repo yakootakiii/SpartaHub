@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../services/seller_service.dart';
 import 'nav_bar.dart';
@@ -29,6 +31,16 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
   void initState() {
     super.initState();
     _auth = FirebaseAuth.instance;
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message.notification!.body ?? 'New notification'),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -283,21 +295,34 @@ class _AuthenticationScreenState extends State<SellerAuthenticationScreen> {
     }
 
     try {
+      User? user;
+
       if (_isLogin) {
-        await _auth.signInWithEmailAndPassword(
+        final userCredential = await _auth.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
+        user = userCredential.user;
       } else {
-        // Create account
         final userCredential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
 
-        final user = userCredential.user;
+        user = userCredential.user;
         if (user != null) {
           await SellerService.createSellerProfile(user, fullName, email);
+        }
+      }
+
+      if (user != null) {
+        //Save FCM token for notifications
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({'fcmToken': token}, SetOptions(merge: true));
         }
       }
 

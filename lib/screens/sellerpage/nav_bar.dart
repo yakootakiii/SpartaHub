@@ -1,7 +1,7 @@
 import 'package:spartahubdev/screens/sellerpage/profile.dart';
 import 'package:flutter/material.dart';
-import './orders.dart';
-import '../notifications_screen.dart';
+import 'orders/seller_orders.dart';
+import 'seller_notification_screen.dart';
 // import 'home_screen.dart';
 // import 'search_screen.dart';
 // import 'cart_screen.dart';
@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     OrderScreen(),
-    NotificationsScreen(),
+    SellerNotificationsScreen(),
     ProfileScreen(),
   ];
 

@@ -499,16 +499,62 @@ class _AcceptedTab extends StatelessWidget {
                   ),
                 ),
                 onPressed: () async {
-                  await FirebaseFirestore.instance
-                      .collection('orders')
-                      .doc(orderId)
-                      .update({'status': 'Ready for Pick-up'});
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Order marked as Ready for Pick-up'),
-                    ),
-                  );
+                  try {
+                    final orderRef = FirebaseFirestore.instance
+                        .collection('orders')
+                        .doc(orderId);
+                    final orderSnapshot = await orderRef.get();
+
+                    if (!orderSnapshot.exists) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Order not found.')),
+                      );
+                      return;
+                    }
+
+                    final courierId = orderSnapshot.data()?['courierId'];
+
+                    if (courierId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No courier assigned to this order.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Update order status
+                    await orderRef.update({'status': 'Ready for Pick-up'});
+
+                    // Send notification
+                    await FirebaseFirestore.instance
+                        .collection('notifications')
+                        .doc(courierId)
+                        .collection('items')
+                        .add({
+                          'title': 'Order Ready for Pick-up',
+                          'message':
+                              'Your assigned order ($orderId) is now ready for pick-up.',
+                          'timestamp': FieldValue.serverTimestamp(),
+                          'isRead': false,
+                          'type': 'new_order',
+                        });
+
+                    // Close dialog/page
+                    Navigator.pop(context);
+
+                    // Confirmation message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Order marked as Ready for Pick-up'),
+                      ),
+                    );
+                  } catch (e) {
+                    print("Error updating order: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to update order: $e')),
+                    );
+                  }
                 },
                 child: const Text(
                   'Ready for Pick-up',

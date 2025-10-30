@@ -211,22 +211,6 @@ class OrderService {
                             .collection('orders')
                             .doc();
 
-                        // await orderRef.set({
-                        //   'buyerId': userId,
-                        //   'buyerName': buyerName,
-                        //   'sellerId': items.first['sellerId'],
-                        //   'sellerName': items.first['sellerName'],
-                        //   'courierId': ' ',
-                        //   'courierName': ' ',
-                        //   'status': 'Processing',
-                        //   'createdAt': FieldValue.serverTimestamp(),
-                        //   'items': items,
-                        //   'subtotal': subtotal,
-                        //   'deliveryFee': deliveryFee,
-                        //   'total': subtotal + deliveryFee,
-                        //   'deliveryAddress': 'CICS Building, Room 106',
-                        // });
-
                         // Determine if it's a direct order or from cart
                         final isDirectOrder = directOrderItem != null;
 
@@ -259,6 +243,22 @@ class OrderService {
                           'courierConfirmation': false,
                           'userConfirmation': false,
                         }, SetOptions(merge: true));
+
+                        final sellerId = isDirectOrder
+                            ? directOrderItem['sellerId']
+                            : items.first['sellerId'];
+
+                        await FirebaseFirestore.instance
+                            .collection('notifications')
+                            .doc(sellerId)
+                            .collection('items')
+                            .add({
+                              'title': 'New Order Received',
+                              'message': 'You have a new order from $buyerName',
+                              'timestamp': FieldValue.serverTimestamp(),
+                              'isRead': false,
+                              'type': 'new_order',
+                            });
 
                         // Clear selected items from cart
                         WriteBatch batch = FirebaseFirestore.instance.batch();
