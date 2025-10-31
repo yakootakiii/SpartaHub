@@ -309,6 +309,47 @@ class _AcceptedOrdersTabState extends State<AcceptedOrdersTab>
                                         'type': 'courier_picked_up',
                                       });
 
+                                  // Get order info
+                                  final sellerId = orderSnapshot
+                                      .data()?['sellerId'];
+
+                                  final subtotal =
+                                      (orderSnapshot.data()?['subtotal'] ?? 0)
+                                          .toDouble();
+
+                                  // 3️⃣ Update seller’s earnings
+                                  final sellerRef = FirebaseFirestore.instance
+                                      .collection('sellers')
+                                      .doc(sellerId);
+                                  await FirebaseFirestore.instance
+                                      .runTransaction((transaction) async {
+                                        final sellerSnap = await transaction
+                                            .get(sellerRef);
+                                        final currentEarnings =
+                                            (sellerSnap.data()?['earnings'] ??
+                                                    0)
+                                                .toDouble();
+                                        transaction.update(sellerRef, {
+                                          'earnings':
+                                              currentEarnings + subtotal,
+                                        });
+                                      });
+
+                                  // 4️⃣ Notify the seller
+                                  await FirebaseFirestore.instance
+                                      .collection('notifications')
+                                      .doc(sellerId)
+                                      .collection('items')
+                                      .add({
+                                        'title': 'Payment received',
+                                        'message':
+                                            'Order $orderTitle has been delivered. ₱${subtotal.toStringAsFixed(2)} added to your earnings.',
+                                        'timestamp':
+                                            FieldValue.serverTimestamp(),
+                                        'isRead': false,
+                                        'type': 'seller_earnings',
+                                      });
+
                                   setModalState(
                                     () => currentStatus = newStatus,
                                   );
