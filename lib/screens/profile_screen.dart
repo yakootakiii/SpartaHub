@@ -314,6 +314,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text('Sign Out'),
           content: const Text('Are you sure you want to sign out?'),
           actions: [
