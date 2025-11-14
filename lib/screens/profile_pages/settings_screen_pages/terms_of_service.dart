@@ -28,9 +28,9 @@ class TermsOfService extends StatelessWidget {
 
 const String _termsText = """
 TERMS OF SERVICE
-Last Updated: [Insert Date]
+Last Updated: Novermber 14, 2025
 
-Welcome to our Food Delivery App (“the App”). By using our services, you agree to follow the Terms of Service outlined below. These terms are written in accordance with general consumer practices and the Data Privacy Act of 2012 (Republic Act 10173) of the Philippines.
+Welcome to our Food Delivery App. By using our services, you agree to follow the Terms of Service outlined below. These terms are written in accordance with general consumer practices and the Data Privacy Act of 2012 (Republic Act 10173) of the Philippines.
 
 1. Acceptance of Terms
 By using the App, you confirm that you are at least 18 years old and agree to comply with these Terms of Service.
