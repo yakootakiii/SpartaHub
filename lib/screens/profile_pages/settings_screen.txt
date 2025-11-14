@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spartahubdev/screens/profile_pages/settings_screen_pages/change_password.dart';
-import 'package:spartahubdev/screens/profile_pages/settings_screen_pages/edit_profile.dart';
-import 'package:spartahubdev/screens/profile_pages/settings_screen_pages/privacy_policy.dart';
-import 'package:spartahubdev/screens/profile_pages/settings_screen_pages/report_a_problem.dart';
-import 'package:spartahubdev/screens/profile_pages/settings_screen_pages/terms_of_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -28,22 +23,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.all(16),
         children: [
           _buildSettingsSection('Account', [
-            _buildSettingsItem(
-              'Edit Profile',
-              Icons.person_outline,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditProfile()),
-              ),
-            ),
-            _buildSettingsItem(
-              'Change Password',
-              Icons.lock_outline,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChangePassword()),
-              ),
-            ),
+            _buildSettingsItem('Edit Profile', Icons.person_outline, () {}),
+            _buildSettingsItem('Change Password', Icons.lock_outline, () {}),
           ]),
 
           _buildSettingsSection('Notifications', [
@@ -63,27 +44,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingsItem(
               'Report a Problem',
               Icons.report_outlined,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportAProblem()),
-              ),
+              () {},
             ),
             _buildSettingsItem(
               'Terms of Service',
               Icons.description_outlined,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TermsOfService()),
-              ),
+              () {},
             ),
-            _buildSettingsItem(
-              'Privacy Policy',
-              Icons.policy_outlined,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PrivacyPolicy()),
-              ),
-            ),
+            _buildSettingsItem('Privacy Policy', Icons.policy_outlined, () {}),
           ]),
         ],
       ),

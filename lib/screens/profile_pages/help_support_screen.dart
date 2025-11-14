@@ -46,14 +46,6 @@ class HelpSupportScreen extends StatelessWidget {
                   SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildQuickHelpButton(
-                          'Live Chat',
-                          Icons.chat,
-                          Colors.white,
-                          Color(0xFFCD0000),
-                        ),
-                      ),
                       SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickHelpButton(
