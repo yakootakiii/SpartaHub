@@ -53,7 +53,7 @@ class _ReportAProblemState extends State<ReportAProblem> {
 
             // Category Dropdown
             DropdownButtonFormField<String>(
-              value: selectedCategory,
+              initialValue: selectedCategory,
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
